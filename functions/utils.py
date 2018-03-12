@@ -2,60 +2,65 @@ import os
 import sys
 import numpy as np
 from tqdm import tqdm
-from scipy.misc import imread, imresize
-import matplotlib.pyplot as plt
+from scipy.misc import imread
+from skimage.transform import resize
+from analytical import *
+from sklearn.metrics import precision_score, recall_score, confusion_matrix, f1_score
+import tensorflow as tf
+from keras import backend as K
 
-'''
-foreground_background_plot
-plots overlapping histograms of the foreground and background of the images
-
-parameters
-__________
-images : np.array
-    the raw data
-masks : np.array
-    the masks
-
-returns
-__________
-none
-'''
-
-
-def foreground_background_plot(images, masks):
-    if (len(images) != len(masks)):
-        raise ValueError("You must have the same number of images and masks.")
-    plt.hist([images[i] * masks[i]
-              for i in range(len(images))], bins=25, label='Foreground')
-    plt.hist([images[i] * (1 - masks[i].astype(int))
-              for i in range(len(images))], bins=25, label='Background')
-    plt.legend(loc='upper right')
-    plt.show()
+def mean_iou(y_true, y_pred):
+    prec = []
+    for t in np.arange(0.5, 1.0, 0.05):
+        y_pred_ = tf.to_int32(y_pred > t)
+        score, up_opt = tf.metrics.mean_iou(tf.convert_to_tensor(y_true),
+                                            tf.convert_to_tensor(y_pred),
+                                            2)
+        K.get_session().run(tf.local_variables_initializer())
+        with tf.control_dependencies([up_opt]):
+            score = tf.identity(score)
+        prec.append(score)
+    return K.mean(K.stack(prec), axis=0).eval(session=K.get_session())
 
 
-'''
-load_data
-loads the training features, the training labels, and the test features
+def precision_recall_f1(labels, predictions):
+    '''
+    calculates precision, recall, and f1 metrics
 
-parameters
-__________
-none
+    parameters
+    __________
+    y_true_in : np.array (2d)
+        the true labels
+    y_pred_in : np.array (2d)
+        the predictions
 
-return
-__________
-X_train : np.array
-    the features of the training set
-Y_train : np.array
-    the labels of the training set
-X_test : np.array
-    the features of the test set
-'''
+    returns
+    __________
+    (precision, recall, f1) : tuple (double)
+    '''
+    return precision_score(labels, predictions, average="weighted"), recall_score(labels, predictions, average="weighted"), f1_score(labels, predictions, average="weighted")
 
 
 def load_data():
+    '''
+    loads the training features, the training labels, and the test features
+
+    parameters
+    __________
+    none
+
+    return
+    __________
+    X_train : np.array
+        the features of the training set
+    Y_train : np.array
+        the labels of the training set
+    X_test : np.array
+        the features of the test set
+    '''
     # Set some parameters
-    IMG_WIDTH = 256
-    IMG_HEIGHT = 256
+    IMG_WIDTH = 128
+    IMG_HEIGHT = 128
     IMG_CHANNELS = 3
     TRAIN_PATH = '../data/stage1_train/'
     TEST_PATH = '../data/stage1_test/'
@@ -64,32 +69,132 @@ def load_data():
     train_ids = next(os.walk(TRAIN_PATH))[1]
     test_ids = next(os.walk(TEST_PATH))[1]
     # Get and resize train images and masks
-    X_train = np.zeros((len(train_ids), IMG_HEIGHT,
-                        IMG_WIDTH, IMG_CHANNELS), dtype=np.uint8)
-    Y_train = np.zeros((len(train_ids), IMG_HEIGHT,
-                        IMG_WIDTH, 1), dtype=np.bool)
+    X_train = np.zeros((len(train_ids), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
+    Y_train = np.zeros((len(train_ids), IMG_HEIGHT, IMG_WIDTH))
+    print('Getting and resizing train images and masks ... ')
+    sys.stdout.flush()
     for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
         path = TRAIN_PATH + id_
         img = imread(path + '/images/' + id_ + '.png')[:, :, :IMG_CHANNELS]
-        img = imresize(img, (IMG_HEIGHT, IMG_WIDTH))
-        X_train[n] = img
+        img = resize(img, (IMG_HEIGHT, IMG_WIDTH),
+                     mode='constant', preserve_range=True)
+        X_train[n] = img / 255.0
         mask = np.zeros((IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool)
         for mask_file in next(os.walk(path + '/masks/'))[2]:
             mask_ = imread(path + '/masks/' + mask_file)
-            mask_ = np.expand_dims(
-                imresize(mask_, (IMG_HEIGHT, IMG_WIDTH)), axis=-1)
+            mask_ = np.expand_dims(resize(mask_, (IMG_HEIGHT, IMG_WIDTH), mode='constant',
+                                          preserve_range=True), axis=-1)
             mask = np.maximum(mask, mask_)
-        Y_train[n] = mask
+        Y_train[n] = np.squeeze(mask) / 255.0
 
     # Get and resize test images
-    X_test = np.zeros((len(test_ids), IMG_HEIGHT, IMG_WIDTH,
-                       IMG_CHANNELS), dtype=np.uint8)
+    X_test = np.zeros((len(test_ids), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
     sizes_test = []
+    print('Getting and resizing test images ... ')
+    sys.stdout.flush()
     for n, id_ in tqdm(enumerate(test_ids), total=len(test_ids)):
         path = TEST_PATH + id_
         img = imread(path + '/images/' + id_ + '.png')[:, :, :IMG_CHANNELS]
         sizes_test.append([img.shape[0], img.shape[1]])
-        img = imresize(img, (IMG_HEIGHT, IMG_WIDTH))
-        X_test[n] = img
+        img = resize(img, (IMG_HEIGHT, IMG_WIDTH),
+                     mode='constant', preserve_range=True)
+        X_test[n] = img / 255.0
+
+    print('Done!')
 
     return X_train, Y_train, X_test
+
+
+def cluster_training_data(X_train, Y_train):
+    '''
+    clusters the training data into modalities
+
+    parameters
+    __________
+    x : np.array
+        the training features
+    y : np.array
+        the training labels
+
+    return
+    __________
+    python dictionary
+        the keys are the modalities, and the values are a dictionary where the
+        keys are "x" and "y" ("x" for data, "y" for labels)
+    '''
+    X_train_sparse = []
+    Y_train_sparse = []
+    X_train_bw = []
+    Y_train_bw = []
+    X_train_wb = []
+    Y_train_wb = []
+    X_train_pb = []
+    Y_train_pb = []
+    X_train_pf = []
+    Y_train_pf = []
+    for i in range(len(X_train)):
+        if is_sparse(X_train[i]):
+            X_train_sparse.append(X_train[i])
+            Y_train_sparse.append(Y_train[i])
+        else:
+            if is_black_white(X_train[i]):
+                X_train_bw.append(X_train[i])
+                Y_train_bw.append(Y_train[i])
+            else:
+                if has_white_background(X_train[i]):
+                    if (has_purple_foreground(X_train[i])):
+                        X_train_pf.append(X_train[i])
+                        Y_train_pf.append(Y_train[i])
+                    else:
+                        X_train_wb.append(X_train[i])
+                        Y_train_wb.append(Y_train[i])
+                else:
+                    X_train_pb.append(X_train[i])
+                    Y_train_pb.append(Y_train[i])
+    return {"sparse": {"x": X_train_sparse, "y": Y_train_sparse},
+            "greyscale": {"x": X_train_bw, "y": Y_train_bw},
+            "white_background": {"x": X_train_wb, "y": Y_train_wb},
+            "purple_background": {"x": X_train_pb, "y": Y_train_pb},
+            "purple_foreground": {"x": X_train_pf, "y": Y_train_pf}
+            }
+
+
+def cluster_test_data(X_test):
+    '''
+    clusters the test data into modalities
+
+    parameters
+    __________
+    x : np.array
+        the test features
+
+    return
+    __________
+    python dictionary
+        the keys are the modalities, and the values are a list of examples
+    '''
+    X_test_sparse = []
+    X_test_bw = []
+    X_test_wb = []
+    X_test_pb = []
+    X_test_pf = []
+    for i in range(len(X_test)):
+        if is_sparse(X_test[i]):
+            X_test_sparse.append(X_test[i])
+        else:
+            if is_black_white(X_test[i]):
+                X_test_bw.append(X_test[i])
+            else:
+                if has_white_background(X_test[i]):
+                    if (has_purple_foreground(X_test[i])):
+                        X_test_pf.append(X_test[i])
+                    else:
+                        X_test_wb.append(X_test[i])
+                else:
+                    X_test_pb.append(X_test[i])
+    return {"sparse": X_test_sparse,
+            "greyscale": X_test_bw,
+            "white_background": X_test_wb,
+            "purple_background": X_test_pb,
+            "purple_foreground": X_test_pf
+            }
