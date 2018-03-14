@@ -28,7 +28,7 @@ def mean_iou(y_true, y_pred):
 
 
 def precision_recall_f1(labels, predictions):
-    '''
+    """
     calculates precision, recall, and f1 metrics
 
     parameters
@@ -41,12 +41,13 @@ def precision_recall_f1(labels, predictions):
     returns
     __________
     (precision, recall, f1) : tuple (double)
-    '''
+    """
     return precision_score(labels, predictions, average="weighted"), recall_score(labels, predictions, average="weighted"), f1_score(labels, predictions, average="weighted")
 
 
-def load_data():
-    '''
+def load_data(TRAIN_PATH="../data/stage1_train/",
+              TEST_PATH="../data/stage1_test/"):
+    """
     loads the training features, the training labels, and the test features
 
     parameters
@@ -61,13 +62,11 @@ def load_data():
         the labels of the training set
     X_test : np.array
         the features of the test set
-    '''
+    """
     # Set some parameters
     IMG_WIDTH = 128
     IMG_HEIGHT = 128
     IMG_CHANNELS = 3
-    TRAIN_PATH = '../data/stage1_train/'
-    TEST_PATH = '../data/stage1_test/'
 
     # Get train and test IDs
     train_ids = next(os.walk(TRAIN_PATH))[1]
@@ -75,18 +74,18 @@ def load_data():
     # Get and resize train images and masks
     X_train = np.zeros((len(train_ids), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
     Y_train = np.zeros((len(train_ids), IMG_HEIGHT, IMG_WIDTH))
-    print('Getting and resizing train images and masks ... ')
+    print("Getting and resizing train images and masks ... ")
     sys.stdout.flush()
     for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
         path = TRAIN_PATH + id_
-        img = imread(path + '/images/' + id_ + '.png')[:, :, :IMG_CHANNELS]
+        img = imread(path + "/images/" + id_ + ".png")[:, :, :IMG_CHANNELS]
         img = resize(img, (IMG_HEIGHT, IMG_WIDTH),
-                     mode='constant', preserve_range=True)
+                     mode="constant", preserve_range=True)
         X_train[n] = img / 255.0
         mask = np.zeros((IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool)
-        for mask_file in next(os.walk(path + '/masks/'))[2]:
-            mask_ = imread(path + '/masks/' + mask_file)
-            mask_ = np.expand_dims(resize(mask_, (IMG_HEIGHT, IMG_WIDTH), mode='constant',
+        for mask_file in next(os.walk(path + "/masks/"))[2]:
+            mask_ = imread(path + "/masks/" + mask_file)
+            mask_ = np.expand_dims(resize(mask_, (IMG_HEIGHT, IMG_WIDTH), mode="constant",
                                           preserve_range=True), axis=-1)
             mask = np.maximum(mask, mask_)
         Y_train[n] = np.squeeze(mask) / 255.0
@@ -94,23 +93,23 @@ def load_data():
     # Get and resize test images
     X_test = np.zeros((len(test_ids), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
     sizes_test = []
-    print('Getting and resizing test images ... ')
+    print("Getting and resizing test images ... ")
     sys.stdout.flush()
     for n, id_ in tqdm(enumerate(test_ids), total=len(test_ids)):
         path = TEST_PATH + id_
-        img = imread(path + '/images/' + id_ + '.png')[:, :, :IMG_CHANNELS]
+        img = imread(path + "/images/" + id_ + ".png")[:, :, :IMG_CHANNELS]
         sizes_test.append([img.shape[0], img.shape[1]])
         img = resize(img, (IMG_HEIGHT, IMG_WIDTH),
-                     mode='constant', preserve_range=True)
+                     mode="constant", preserve_range=True)
         X_test[n] = img / 255.0
 
-    print('Done!')
+    print("Done!")
 
     return X_train, Y_train, X_test
 
 
 def cluster_training_data(X_train, Y_train):
-    '''
+    """
     clusters the training data into modalities
 
     parameters
@@ -125,7 +124,7 @@ def cluster_training_data(X_train, Y_train):
     python dictionary
         the keys are the modalities, and the values are a dictionary where the
         keys are "x" and "y" ("x" for data, "y" for labels)
-    '''
+    """
     X_train_sparse = []
     Y_train_sparse = []
     X_train_bw = []
@@ -164,7 +163,7 @@ def cluster_training_data(X_train, Y_train):
 
 
 def cluster_test_data(X_test):
-    '''
+    """
     clusters the test data into modalities
 
     parameters
@@ -176,7 +175,7 @@ def cluster_test_data(X_test):
     __________
     python dictionary
         the keys are the modalities, and the values are a list of examples
-    '''
+    """
     X_test_sparse = []
     X_test_bw = []
     X_test_wb = []
