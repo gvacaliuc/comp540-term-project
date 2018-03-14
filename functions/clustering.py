@@ -88,8 +88,7 @@ def is_sparse(image):
     else:
         return False
 
-def cluster
-_training_data(X_train, Y_train):
+def cluster_training_data(X_train, Y_train):
     """
     clusters the training data into modalities
 
