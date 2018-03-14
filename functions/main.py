@@ -7,7 +7,7 @@ from predict import *
 def predict(image):
     # if the image is sparse
     if is_sparse(image):
-        print 'sparse'
+        print("sparse")
         features = basis_map(image)
         lda_output = lda_predict(features)
         return non_max_component_suppression(
