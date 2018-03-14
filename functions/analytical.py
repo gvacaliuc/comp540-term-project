@@ -1,10 +1,10 @@
-from skimage import exposure
 import cv2
 import numpy as np
+from skimage import exposure
 
 
 def basis_map(image):
-    '''
+    """
     maps each pixel of an image to a set of features
 
     parameters
@@ -16,7 +16,7 @@ def basis_map(image):
     __________
     np.array (128 x 128 x 9)
         the image features
-    '''
+    """
     new_image = np.zeros((image.shape[0], image.shape[1], 9))
     mean = np.mean(image)
     std = np.std(image)

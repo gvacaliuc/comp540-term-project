@@ -13,7 +13,6 @@ from tqdm import tqdm
 from analytical import *
 
 
-
 def mean_iou(y_true, y_pred):
     prec = []
     for t in np.arange(0.5, 1.0, 0.05):
@@ -110,7 +109,7 @@ def load_data(TRAIN_PATH="../data/stage1_train/",
 
 
 def flatten_training_data(X_train, Y_train, skip=10):
-    '''
+    """
     inputs an N x X x Y x D feature training set and corresponding
     N x X x Y x 1 label training set and flattens them into a
     NXY x D feature set (a.k.a. a pixel-wise feature set)
@@ -132,7 +131,7 @@ def flatten_training_data(X_train, Y_train, skip=10):
     labels : np.array of dimensions NXY x 1
         the flattened labels of the training set
 
-    '''
+    """
     features_seperate = np.nan_to_num(
         [x.reshape((128*128, 9)) for x in X_train])
     flattened_features = []
@@ -144,7 +143,7 @@ def flatten_training_data(X_train, Y_train, skip=10):
 
 
 def flatten_test_data(X_train):
-    '''
+    """
     inputs an N x X x Y x D feature training set flattens it into a
     NXY x D feature set (a.k.a. a pixel-wise feature set)
 
@@ -158,7 +157,7 @@ def flatten_test_data(X_train):
     flattened_features : np.array of dimensions NXY x D
         the flattened features of the training set
 
-    '''
+    """
     flattened_features_by_image = np.nan_to_num(
         [x.reshape((128*128, 8)) for x in X_train])
     flattened_features = []

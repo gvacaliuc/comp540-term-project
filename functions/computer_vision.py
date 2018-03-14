@@ -1,6 +1,6 @@
-from skimage.filters import threshold_otsu
-from scipy.ndimage.measurements import label
 import numpy as np
+from scipy.ndimage.measurements import label
+from skimage.filters import threshold_otsu
 
 
 def otsu(image):
@@ -23,7 +23,7 @@ def otsu(image):
 
 
 def non_max_component_suppression(X, percent=99, min_area=0):
-    '''
+    """
     performs non_max_suppression within connected components
 
     parameters
@@ -39,7 +39,7 @@ def non_max_component_suppression(X, percent=99, min_area=0):
     __________
     predictions : np.array
         the thresholded image
-    '''
+    """
     otsu_predictions = otsu(X)
     labeled, num_labels = label(otsu_predictions)
     flattened_labels = labeled.reshape((128*128, 1))

@@ -1,10 +1,11 @@
-import numpy as np
 import pickle
+
+import numpy as np
 from sklearn.externals import joblib
 
 
 def lda_predict(image):
-    '''
+    """
     uses lda to segment an image
 
     parameters
@@ -16,8 +17,8 @@ def lda_predict(image):
     __________
     np.array (128 x 128)
         the predictions
-    '''
-    lda = joblib.load('../saved_models/sparse/lda.model')
+    """
+    lda = joblib.load("../saved_models/sparse/lda.model")
     new_image = np.zeros((128, 128))
     for i in range(len(image)):
         for j in range(len(image[0])):
@@ -27,7 +28,7 @@ def lda_predict(image):
 
 
 def lr_predict(image):
-    '''
+    """
     uses ElasticNet to segment an image
 
     parameters
@@ -39,8 +40,8 @@ def lr_predict(image):
     __________
     np.array (128 x 128)
         the predictions
-    '''
-    lr = joblib.load('../saved_models/white_background/lr.model')
+    """
+    lr = joblib.load("../saved_models/white_background/lr.model")
     new_image = np.zeros((128, 128))
     for i in range(len(image)):
         for j in range(len(image[0])):
@@ -48,7 +49,7 @@ def lr_predict(image):
     return new_image
 
 def svr_predict(image):
-    '''
+    """
     uses SVR to segment an image
 
     parameters
@@ -60,8 +61,8 @@ def svr_predict(image):
     __________
     np.array (128 x 128)
         the predictions
-    '''
-    svr = joblib.load('../saved_models/purple_foreground/SVR.model')
+    """
+    svr = joblib.load("../saved_models/purple_foreground/SVR.model")
     new_image = np.zeros((128, 128))
     for i in range(len(image)):
         for j in range(len(image[0])):

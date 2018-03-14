@@ -1,7 +1,7 @@
 from analytical import *
-from predict import *
-from computer_vision import *
 from clustering import *
+from computer_vision import *
+from predict import *
 
 
 def predict(image):

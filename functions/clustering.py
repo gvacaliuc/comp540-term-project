@@ -2,7 +2,7 @@ import numpy as np
 
 
 def has_white_background(image):
-    '''
+    """
     determines if an input image has a white background
 
     parameters
@@ -14,7 +14,7 @@ def has_white_background(image):
     __________
     has_white_background : boolean
         true if the image has a white background, false otherwise
-    '''
+    """
     image = np.array(image) * 255
     rgb_sums = np.sum(image, axis=2)
     if (rgb_sums > 620).sum() >= 14:
@@ -24,7 +24,7 @@ def has_white_background(image):
 
 
 def is_black_white(image):
-    '''
+    """
     determines if an input image is on a black/white scale
 
     parameters
@@ -36,7 +36,7 @@ def is_black_white(image):
     __________
     is_black_white : boolean
         true if the image is on a black and white scale, false otherwise
-    '''
+    """
     image = np.array(image) * 255
     R = [np.mean(image[:, :, 0])]
     G = [np.mean(image[:, :, 1])]
@@ -48,7 +48,7 @@ def is_black_white(image):
 
 
 def has_purple_foreground(image):
-    '''
+    """
     determines if an input image has a purple foreground
 
     parameters
@@ -60,7 +60,7 @@ def has_purple_foreground(image):
     __________
     boolean
         true if the image has a purple foreground, false otherwise
-    '''
+    """
     image = np.array(image) * 255
     if np.mean(image[:, :, 1]) < 178:
         return True
@@ -69,7 +69,7 @@ def has_purple_foreground(image):
 
 
 def is_sparse(image):
-    '''
+    """
     determines if an input image is sparse or not
 
     parameters
@@ -81,7 +81,7 @@ def is_sparse(image):
     __________
     is_sparse : boolean
         true if the image is sparse, false otherwise
-    '''
+    """
     image = np.array(image) * 255
     if (np.mean(image[:, :, 2]) < 114):
         return True
@@ -90,7 +90,7 @@ def is_sparse(image):
 
 def cluster
 _training_data(X_train, Y_train):
-    '''
+    """
     clusters the training data into modalities
 
     parameters
@@ -105,7 +105,7 @@ _training_data(X_train, Y_train):
     python dictionary
         the keys are the modalities, and the values are a dictionary where the
         keys are "x" and "y" ("x" for data, "y" for labels)
-    '''
+    """
     X_train_sparse = []
     Y_train_sparse = []
     X_train_bw = []
@@ -144,7 +144,7 @@ _training_data(X_train, Y_train):
 
 
 def cluster_test_data(X_test):
-    '''
+    """
     clusters the test data into modalities
 
     parameters
@@ -156,7 +156,7 @@ def cluster_test_data(X_test):
     __________
     python dictionary
         the keys are the modalities, and the values are a list of examples
-    '''
+    """
     X_test_sparse = []
     X_test_bw = []
     X_test_wb = []
