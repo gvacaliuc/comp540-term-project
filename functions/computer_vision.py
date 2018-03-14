@@ -4,7 +4,7 @@ from skimage.filters import threshold_otsu
 
 
 def otsu(image):
-    '''
+    """
     performs otsu's binarization on an image
 
     parameters
@@ -16,7 +16,7 @@ def otsu(image):
     __________
     predictions : np.array
         the thresholded image
-    '''
+    """
     thresh_val = threshold_otsu(image)
     mask = np.array(image > .5)
     return np.multiply(image, mask)
