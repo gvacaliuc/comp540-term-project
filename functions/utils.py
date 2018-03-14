@@ -1,13 +1,17 @@
 import os
 import sys
+
 import numpy as np
-from tqdm import tqdm
-from scipy.misc import imread
-from skimage.transform import resize
-from analytical import *
-from sklearn.metrics import precision_score, recall_score, confusion_matrix, f1_score
 import tensorflow as tf
 from keras import backend as K
+from scipy.misc import imread
+from skimage.transform import resize
+from sklearn.metrics import (confusion_matrix, f1_score, precision_score,
+                             recall_score)
+from tqdm import tqdm
+
+from analytical import *
+
 
 def mean_iou(y_true, y_pred):
     prec = []
