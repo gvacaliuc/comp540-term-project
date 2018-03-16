@@ -19,7 +19,7 @@ def lda_predict(image):
         the predictions
     """
     lda = joblib.load("../saved_models/sparse/lda.model")
-    new_image = np.zeros((128, 128))
+    new_image = np.zeros(image.shape[:2])
     for i in range(len(image)):
         for j in range(len(image[0])):
             new_image[i][j] = lda.predict_proba(
@@ -42,7 +42,7 @@ def lr_predict(image):
         the predictions
     """
     lr = joblib.load("../saved_models/white_background/lr.model")
-    new_image = np.zeros((128, 128))
+    new_image = np.zeros(image.shape[:2])
     for i in range(len(image)):
         for j in range(len(image[0])):
             new_image[i][j] = lr.predict(image[i][j].reshape(1, -1))
@@ -63,7 +63,7 @@ def svr_predict(image):
         the predictions
     """
     svr = joblib.load("../saved_models/purple_foreground/SVR.model")
-    new_image = np.zeros((128, 128))
+    new_image = np.zeros(image.shape[:2])
     for i in range(len(image)):
         for j in range(len(image[0])):
             new_image[i][j] = svr.predict(image[i][j].reshape(1, -1))
