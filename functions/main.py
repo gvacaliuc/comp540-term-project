@@ -16,7 +16,7 @@ def predict(image):
     else:
         # if the image is on a black/white scale
         if is_black_white(image):
-            raise ValueError("not yet implemented")
+            raise NotImplementedError("dense black/white")
         # if the image is on a color scale
         else:
             # if the image has a white background
@@ -33,5 +33,5 @@ def predict(image):
                         lr_output, min_area=5, percent=95)
             # is the image has a purple background
             else:
-                raise ValueError("not yet implemented")
+                raise NotImplementedError("dense purple background")
     return predictions
