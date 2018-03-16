@@ -1,6 +1,7 @@
-from skimage import measure, segmentation, feature
-from scipy import ndimage
 import numpy as np
+from scipy import ndimage
+from skimage import feature, measure, segmentation
+
 
 def preprocess(pred):
     """

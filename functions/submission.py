@@ -7,6 +7,7 @@ performing the requisite RLE encoding.
 
 import numpy as np
 
+
 def encode_rle_single_mask(nucleus_mask):
     """
     Run length encodes a single mask.
