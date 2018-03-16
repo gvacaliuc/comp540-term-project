@@ -13,16 +13,18 @@ def encode_rle_single_mask(nucleus_mask):
     Run length encodes a single mask.
 
     :param nucleus_mask: a binary ndarray masking a single nucleus in the image
-    :return rle: a list of tuples holding the run length encoding of a 
+    :return rle: a list of tuples holding the run length encoding of a
                  mask using a flattened 1-indexed coding
     """
 
-    flat_bw_mask = (nucleus_mask > 0).flatten()
+    #   must use fortran style arrays due to kaggle requirements
+    flat_bw_mask = np.array(nucleus_mask > 0,
+                            dtype = "int64").flatten(order = "F")
 
     nonzero_ind  = np.nonzero(flat_bw_mask)[0]
     diff = np.diff(nonzero_ind)
     runstarts = np.hstack([[0], np.nonzero(diff != 1)[0] + 1])
-    rle = [(1 + nonzero_ind[start], nextstart - start) 
+    rle = [(1 + nonzero_ind[start], nextstart - start)
            for (start, nextstart) in zip(runstarts[:-1], runstarts[1:])]
     last_start = runstarts[-1]
     rle += [(1 + nonzero_ind[last_start], len(nonzero_ind) - last_start)]
@@ -39,12 +41,12 @@ def decode_rle(encoding, shape):
     :return mask: the rebuilt mask
     """
 
-    mask = np.zeros_like(Y_train[0]).flatten()
+    mask = np.zeros(shape).flatten()
 
     for tup in rle_encoding:
         true_ind = tup[0] - 1
         mask[true_ind:(true_ind + tup[1])] = 1
-        
-    mask = mask.reshape(Y_train[0].shape)
+
+    mask = mask.reshape(shape, order = "F")
 
     return mask
