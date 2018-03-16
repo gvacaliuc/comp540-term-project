@@ -2,9 +2,10 @@ import os
 import sys
 
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 from keras import backend as K
-from scipy.misc import imread
+from skimage.io import ImageCollection, imread
 from skimage.transform import resize
 from sklearn.metrics import (confusion_matrix, f1_score, precision_score,
                              recall_score)
@@ -33,16 +34,18 @@ def precision_recall_f1(labels, predictions):
 
     parameters
     __________
-    y_true_in : np.array (2d)
+    labels : np.array (2d)
         the true labels
-    y_pred_in : np.array (2d)
+    predictions : np.array (2d)
         the predictions
 
     returns
     __________
     (precision, recall, f1) : tuple (double)
     """
-    return precision_score(labels, predictions, average="weighted"), recall_score(labels, predictions, average="weighted"), f1_score(labels, predictions, average="weighted")
+    return (precision_score(labels, predictions, average="weighted"),
+            recall_score(labels, predictions, average="weighted"),
+            f1_score(labels, predictions, average="weighted"))
 
 
 def load_data(TRAIN_PATH="../data/stage1_train/",
@@ -68,44 +71,37 @@ def load_data(TRAIN_PATH="../data/stage1_train/",
     IMG_HEIGHT = 128
     IMG_CHANNELS = 3
 
-    # Get train and test IDs
-    train_ids = next(os.walk(TRAIN_PATH))[1]
-    test_ids = next(os.walk(TEST_PATH))[1]
-    # Get and resize train images and masks
-    X_train = np.zeros((len(train_ids), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
-    Y_train = np.zeros((len(train_ids), IMG_HEIGHT, IMG_WIDTH))
-    print("Getting and resizing train images and masks ... ")
-    sys.stdout.flush()
-    for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
-        path = TRAIN_PATH + id_
-        img = imread(path + "/images/" + id_ + ".png")[:, :, :IMG_CHANNELS]
-        img = resize(img, (IMG_HEIGHT, IMG_WIDTH),
-                     mode="constant", preserve_range=True)
-        X_train[n] = img / 255.0
-        mask = np.zeros((IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool)
-        for mask_file in next(os.walk(path + "/masks/"))[2]:
-            mask_ = imread(path + "/masks/" + mask_file)
-            mask_ = np.expand_dims(resize(mask_, (IMG_HEIGHT, IMG_WIDTH), mode="constant",
-                                          preserve_range=True), axis=-1)
-            mask = np.maximum(mask, mask_)
-        Y_train[n] = np.squeeze(mask) / 255.0
+    train_reader = DataReader(TRAIN_PATH, imsize = (IMG_HEIGHT, IMG_WIDTH),
+                              num_channels = IMG_CHANNELS, scale = True)
+    test_reader = DataReader(TEST_PATH, train = False,
+                             imsize = (IMG_HEIGHT, IMG_WIDTH),
+                             num_channels = IMG_CHANNELS, scale = True)
 
-    # Get and resize test images
-    X_test = np.zeros((len(test_ids), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS))
-    sizes_test = []
+    print("Getting and resizing train images and masks ... ")
+    X_train = train_reader.as_matrix()
+    Y_train = np.stack(train_reader.masks)
+
     print("Getting and resizing test images ... ")
-    sys.stdout.flush()
-    for n, id_ in tqdm(enumerate(test_ids), total=len(test_ids)):
-        path = TEST_PATH + id_
-        img = imread(path + "/images/" + id_ + ".png")[:, :, :IMG_CHANNELS]
-        sizes_test.append([img.shape[0], img.shape[1]])
-        img = resize(img, (IMG_HEIGHT, IMG_WIDTH),
-                     mode="constant", preserve_range=True)
-        X_test[n] = img / 255.0
+    X_test = test_reader.as_matrix()
 
     print("Done!")
-
     return X_train, Y_train, X_test
+
+
+def flatten_data(data, labels = None, skip = 10):
+    """
+    Flattens our image matrices and masks into training pairs.
+    """
+
+    num_features = data.shape[-1]
+
+    data = np.nan_to_num(data[::skip]).reshape((-1, num_features))
+
+    if labels is not None:
+        labels = labels[::skip].reshape((-1, 1))
+        return data, labels
+
+    return data
 
 
 def flatten_training_data(X_train, Y_train, skip=10):
@@ -132,14 +128,8 @@ def flatten_training_data(X_train, Y_train, skip=10):
         the flattened labels of the training set
 
     """
-    features_seperate = np.nan_to_num(
-        [x.reshape((128*128, 9)) for x in X_train])
-    flattened_features = []
-    labels = []
-    for i in range(0, len(X_train), skip):
-        flattened_features.extend(features_seperate[i])
-        labels.extend(Y_train[i].reshape((128*128)))
-    return np.array(flattened_features), np.array(labels)
+
+    return flatten_data(X_train, Y_train, skip=skip)
 
 
 def flatten_test_data(X_train):
@@ -158,9 +148,113 @@ def flatten_test_data(X_train):
         the flattened features of the training set
 
     """
-    flattened_features_by_image = np.nan_to_num(
-        [x.reshape((128*128, 8)) for x in X_train])
-    flattened_features = []
-    for i in range(len(flattened_features_by_image)):
-        flattened_features.extend(flattened_features_by_image[i])
-    return flattened_features_by_image
+
+    return flatten_data(X_train, Y_train, skip=skip)
+
+
+class DataReader(object):
+
+    def __init__(self, directory, train = True, imsize = (128, 128),
+                 num_channels = 3, scale = True):
+        """
+        Class to read in our training and testing data, resize it, and store
+        some metadata, including the image id and original size.  If we need to
+        change the preprocessing for the images, we can do so in the _process
+        method.
+        """
+
+        data_pattern = os.path.join(directory, "**/images/*.png")
+
+        self.directory = directory
+        self.train = train
+        self.imsize = imsize
+        self.num_channels = num_channels
+        self.scale = scale
+        self.IMG_MAX = 255.0
+
+        self.image_metadata = []
+        self.masks = []
+        self.metadata_columns = ["image_id", "orig_shape"]
+
+        imloader = lambda f: self._imloader(f)
+        self.data_ic = ImageCollection(data_pattern, load_func = imloader)
+
+    def _imloader(self, filename):
+        """
+        Function to read, resize, and process an image.
+        """
+
+        image_id, _, _ = filename.lstrip(self.directory + "/").split("/")
+
+        img = imread(filename)[:, :, :self.num_channels]
+        orig_shape = img.shape[:2]
+        img = self._process(img)
+
+        self.image_metadata.append((image_id, orig_shape))
+
+        #   Load training labels if we're loading a training dataset
+        if self.train:
+            mask = self._mask_loader(image_id)
+            self.masks.append(mask)
+
+        return img
+
+    def _mask_loader(self, image_id):
+        """
+        Function to load masks of specific image.
+        """
+
+        mask_pattern = os.path.join(self.directory, image_id, "masks/*.png")
+        ic = ImageCollection(mask_pattern)
+
+        mask = np.zeros(self.imsize, dtype='uint8')
+        for indiv_mask in ic:
+            mask = np.maximum(mask, self._process(indiv_mask))
+
+        return mask
+
+    def _process(self, img):
+        """
+        Processes an image per our specifications.
+        """
+
+        img = resize(img, self.imsize, mode="constant", preserve_range=True)
+        if self.scale:
+            img = img / self.IMG_MAX
+
+        return img
+
+    def get_metadata(self):
+        """
+        Returns a pandas dataframe of the current stored metadata.
+        """
+
+        if (len(self.image_metadata) == 0):
+            raise Warning("Returning empty metadata.")
+
+        return pd.DataFrame(
+            self.image_metadata,
+            columns = self.metadata_columns)
+
+    def as_matrix(self, start = 0, end = None, skip = 1):
+        """
+        Returns a dense version of our training data as a matrix of shape
+        (N, X, Y, D).  Clears out previously saved masks and metadata.
+
+        The parameters start, end, and skip operate like in range.
+        """
+
+        self.image_metadata = []
+        self.masks = []
+
+        end = len(self.data_ic) if end is None else end
+
+        return self.data_ic[start:end:skip].concatenate()
+
+    def get(self, *args):
+        """
+        Returns (get_metadata(), as_matrix(*args)).
+        """
+
+        matrix = self.as_matrix(*args)
+        return (self.get_metadata(), matrix)
