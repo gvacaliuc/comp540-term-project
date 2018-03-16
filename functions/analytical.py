@@ -9,41 +9,84 @@ def basis_map(image):
 
     parameters
     __________
-    image : np.array (128 x 128)
+    image : np.array (height x width x channels)
         the input image
 
     returns
     __________
-    np.array (128 x 128 x 9)
+    np.array (height x width x 9)
         the image features
     """
-    new_image = np.zeros((image.shape[0], image.shape[1], 9))
+
+    num_features = 9
+    IMG_MAX = 255.0
+    new_image = np.zeros((*image.shape[:2], num_features))
+
     mean = np.mean(image)
     std = np.std(image)
+
+
+    # Diameter of each pixel neighborhood that is used during filtering.
+    bilateral_d = 2
+    # Filter sigma in the color space. A larger value of the parameter means
+    # that farther colors within the pixel neighborhood (see sigmaSpace) will
+    # be mixed together, resulting in larger areas of semi-equal color. 
+    bilateral_sigma_color = 75
+    # Filter sigma in the coordinate space. A larger value of the parameter
+    # means that farther pixels will influence each other as long as their
+    # colors are close enough (see sigmaColor ). When d>0, it specifies the
+    # neighborhood size regardless of sigmaSpace. Otherwise, d is proportional
+    # to sigmaSpace.
+    bilateral_sigma_space = 75
+
     bilateral = cv2.bilateralFilter(
-        np.mean(image * 255, axis=2).astype("uint8"), 2, 75, 75) / 255.0
+            np.mean(image * IMG_MAX, axis=2).astype("uint8"),
+            bilateral_d,
+            bilateral_sigma_color,
+            bilateral_sigma_space) / IMG_MAX
     p2, p98 = np.percentile(image, (2, 98))
-    img_rescale = np.mean(exposure.rescale_intensity(
-        image, in_range=(p2, p98)), axis=2)
-    equalize_hist = np.mean(exposure.equalize_adapthist(
-        image, clip_limit=0.03), axis=2)
-    dilate = np.mean(cv2.dilate(image, np.ones((5, 5)), iterations=2), axis=2)
-    for i in range(len(image)):
-        for j in range(len(image)):
-            new_image[i][j][0] = image[i][j][0]
-            new_image[i][j][1] = image[i][j][1]
-            new_image[i][j][2] = image[i][j][2]
-            new_image[i][j][3] = (np.mean(image[i][j]) - mean) / std
-            new_image[i][j][4] = bilateral[i][j]
-            new_image[i][j][5] = img_rescale[i][j]
-            new_image[i][j][6] = equalize_hist[i][j]
-            new_image[i][j][7] = dilate[i][j]
+    img_rescale = np.mean(
+            exposure.rescale_intensity(image, in_range=(p2, p98)),
+            axis=2)
+
+    # Limit of the amplification of the adaptive histogram.
+    equalize_hist_clip_limit = 0.03
+
+    equalize_hist = np.mean(
+        exposure.equalize_adapthist(image, clip_limit=equalize_hist_clip_limit),
+        axis=2)
+
+    # Dialation region to consider.
+    dialation_kernel = np.ones((5, 5))
+    # Number of dialation iterations to run.
+    dialation_iters = 2
+    dilate = np.mean(cv2.dilate(image, 
+                                dialation_kernel, 
+                                iterations=dialation_iters), 
+                     axis=2)
+
+    # First 3 dimensions are original color space.
+    new_image[:, :, :3] = image
+    # 4th dimension is the deviation of a mean of a pixel from the image mean.
+    new_image[:, :, 3] = (np.mean(image, axis = 2) - mean) / std
+    # 5th dimension is the result of a bilateral filtering
+    new_image[:, :, 4] = bilateral
+    # 6th dimension is the rescaled image
+    new_image[:, :, 5] = img_rescale
+    # 7th dimension is the result of a adaptive histogram
+    new_image[:, :, 6] = equalize_hist
+    # 8th dimension is a dialation
+    new_image[:, :, 7] = dilate
+
     for i in range(len(image)):
         for j in range(len(image)):
             lower_i = max(i - 1, 0)
             upper_i = min(i + 1, image.shape[0] - 1)
             lower_j = max(j - 1, 0)
             upper_j = min(j + 1, image.shape[1] - 1)
-            new_image[i][j][8] = np.mean([np.linalg.norm(new_image[i][j] - new_image[neighbor_i][neighbor_j])
-                                          for neighbor_i in range(lower_i, upper_i + 1) for neighbor_j in range(lower_j, upper_j + 1)])
+            neighborhood = new_image[lower_i:upper_i, lower_j:upper_j, :8]
+            mean_neighbor_dist = np.linalg.norm(neighborhood - new_image[i, j],
+                                                axis = 2)
+            new_image[i, j, 8] = np.mean(mean_neighbor_dist)
+
     return np.nan_to_num(new_image)
