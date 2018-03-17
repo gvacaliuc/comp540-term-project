@@ -98,7 +98,7 @@ def flatten_data(data, labels = None, skip = 10):
     data = np.nan_to_num(data[::skip]).reshape((-1, num_features))
 
     if labels is not None:
-        labels = labels[::skip].reshape((-1, 1))
+        labels = labels[::skip].reshape((-1))
         return data, labels
 
     return data
@@ -247,10 +247,10 @@ class DataReader(object):
 
         return self.data_ic[start:end:skip].concatenate()
 
-    def get(self, *args):
+    def get(self, *args, **kwargs):
         """
         Returns (get_metadata(), as_matrix(*args)).
         """
 
-        matrix = self.as_matrix(*args)
+        matrix = self.as_matrix(*args, **kwargs)
         return (self.get_metadata(), matrix)

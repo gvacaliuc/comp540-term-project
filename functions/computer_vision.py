@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.ndimage.measurements import label
 from skimage.filters import threshold_otsu
+from skimage.transform import resize
 
 IMG_MAX = 255.0
 
@@ -57,12 +58,16 @@ def non_max_component_suppression(X, percent=99, min_area=0):
     return flattened_otsu_predictions.reshape((128, 128))
 
 
-def preprocess_image(img, imsize = (128, 128), scale = True)
+def preprocess_image(img, imsize = (128, 128), scale = True):
     """
     Processes an image per our specifications.
     """
 
-    img = resize(img, kwargs["imsize"], mode="constant", preserve_range=True)
+    WHITE_THRESHOLD = 0.55
+
+    img = resize(img, imsize, mode="constant", preserve_range=True)
     img /= IMG_MAX if scale else 1
+
+    img = (1 - img) if img.mean() > WHITE_THRESHOLD else img
 
     return img
