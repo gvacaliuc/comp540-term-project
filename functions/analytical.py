@@ -2,6 +2,28 @@ import cv2
 import numpy as np
 from skimage import exposure
 
+import warnings
+
+class BasisTransformer(object):
+
+    def __init__(self, *args, **kwargs):
+        """
+        Class to transform our original RGB features into our hand designed
+        features.
+        """
+
+        pass
+
+    def transform(self, data):
+        """
+        Transforms the "data".
+
+        :param data: array of shape N x X x Y x C
+        :type data: ndarray
+        """
+
+        return np.stack([basis_map(im) for im in data])
+
 
 def basis_map(image):
     """
@@ -52,9 +74,13 @@ def basis_map(image):
     # Limit of the amplification of the adaptive histogram.
     equalize_hist_clip_limit = 0.03
 
-    equalize_hist = np.mean(
-        exposure.equalize_adapthist(image, clip_limit=equalize_hist_clip_limit),
-        axis=2)
+    # TODO: This raisies a warning about precision loss, but I don't know why.
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore")
+        equalize_hist = np.mean(
+            exposure.equalize_adapthist(
+                image, clip_limit=equalize_hist_clip_limit),
+            axis=2)
 
     # Dialation region to consider.
     dialation_kernel = np.ones((5, 5))
@@ -85,8 +111,8 @@ def basis_map(image):
             lower_j = max(j - 1, 0)
             upper_j = min(j + 1, image.shape[1] - 1)
             neighborhood = new_image[lower_i:upper_i, lower_j:upper_j, :8]
-            mean_neighbor_dist = np.linalg.norm(neighborhood - new_image[i, j],
-                                                axis = 2)
-            new_image[i, j, 8] = np.mean(mean_neighbor_dist)
+            neighbor_dist = np.linalg.norm(neighborhood - new_image[i, j, :8],
+                                           axis = 2)
+            new_image[i, j, 8] = np.mean(neighbor_dist)
 
     return np.nan_to_num(new_image)
