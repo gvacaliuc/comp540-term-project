@@ -43,7 +43,7 @@ def basis_map(image):
 
     num_features = 9
     IMG_MAX = 255.0
-    new_image = np.zeros((*image.shape[:2], num_features))
+    new_image = np.zeros((image.shape[:2], num_features))
 
     mean = np.mean(image)
     std = np.std(image)
@@ -53,7 +53,7 @@ def basis_map(image):
     bilateral_d = 2
     # Filter sigma in the color space. A larger value of the parameter means
     # that farther colors within the pixel neighborhood (see sigmaSpace) will
-    # be mixed together, resulting in larger areas of semi-equal color. 
+    # be mixed together, resulting in larger areas of semi-equal color.
     bilateral_sigma_color = 75
     # Filter sigma in the coordinate space. A larger value of the parameter
     # means that farther pixels will influence each other as long as their
@@ -87,9 +87,9 @@ def basis_map(image):
     dialation_kernel = np.ones((5, 5))
     # Number of dialation iterations to run.
     dialation_iters = 2
-    dilate = np.mean(cv2.dilate(image, 
-                                dialation_kernel, 
-                                iterations=dialation_iters), 
+    dilate = np.mean(cv2.dilate(image,
+                                dialation_kernel,
+                                iterations=dialation_iters),
                      axis=2)
 
     # First 3 dimensions are original color space.
