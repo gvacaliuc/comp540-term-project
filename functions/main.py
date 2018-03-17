@@ -2,12 +2,12 @@ from analytical import *
 from clustering import *
 from computer_vision import *
 from predict import *
+from scipy.ndimage import binary_fill_holes as fill_holes
 
 
 def predict(image):
     # if the image is sparse
     if is_sparse(image):
-        print("sparse")
         features = basis_map(image)
         lda_output = lda_predict(features)
         return non_max_component_suppression(
@@ -34,4 +34,4 @@ def predict(image):
             # is the image has a purple background
             else:
                 raise NotImplementedError("dense purple background")
-    return predictions
+    return fill_holes(predictions)
