@@ -12,7 +12,7 @@ from sklearn.metrics import (confusion_matrix, f1_score, precision_score,
 from tqdm import tqdm
 
 from analytical import *
-
+from computer_vision import preprocess_image
 
 def mean_iou(y_true, y_pred):
     prec = []
@@ -218,11 +218,7 @@ class DataReader(object):
         Processes an image per our specifications.
         """
 
-        img = resize(img, self.imsize, mode="constant", preserve_range=True)
-        if self.scale:
-            img = img / self.IMG_MAX
-
-        return img
+        return preprocess_image(img, self.imsize, self.scale)
 
     def get_metadata(self):
         """

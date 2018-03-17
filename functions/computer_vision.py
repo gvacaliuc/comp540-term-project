@@ -2,6 +2,7 @@ import numpy as np
 from scipy.ndimage.measurements import label
 from skimage.filters import threshold_otsu
 
+IMG_MAX = 255.0
 
 def otsu(image):
     """
@@ -54,3 +55,14 @@ def non_max_component_suppression(X, percent=99, min_area=0):
         else:
             flattened_otsu_predictions[indices] = 0
     return flattened_otsu_predictions.reshape((128, 128))
+
+
+def preprocess_image(img, imsize = (128, 128), scale = True)
+    """
+    Processes an image per our specifications.
+    """
+
+    img = resize(img, kwargs["imsize"], mode="constant", preserve_range=True)
+    img /= IMG_MAX if scale else 1
+
+    return img
