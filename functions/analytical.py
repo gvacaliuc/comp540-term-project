@@ -1,8 +1,9 @@
+import warnings
+
 import cv2
 import numpy as np
 from skimage import exposure
 
-import warnings
 
 class BasisTransformer(object):
 
