@@ -70,4 +70,4 @@ class MiniBatchRegressor(BaseEstimator, RegressorMixin):
 
         num_features = images.shape[-1]
         data = images.reshape((-1, num_features))
-        return self.predict(data).reshape(images.shape)
+        return self.predict(data).reshape(images.shape[:-1])
