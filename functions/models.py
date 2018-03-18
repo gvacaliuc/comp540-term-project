@@ -4,12 +4,14 @@ models.py
 File to hold our models.
 """
 
+import inspect
+
 import numpy as np
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.linear_model import SGDRegressor
-import inspect
 
 from analytical import BasisTransformer
+
 
 class MiniBatchRegressor(BaseEstimator, RegressorMixin):
     """

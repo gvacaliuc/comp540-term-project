@@ -12,6 +12,7 @@ from tqdm import tqdm
 from analytical import *
 from computer_vision import preprocess_image
 
+
 def load_data(TRAIN_PATH="../data/stage1_train/",
               TEST_PATH="../data/stage1_test/"):
     """

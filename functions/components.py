@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import ndimage
-from skimage import feature, measure, segmentation, morphology
+from skimage import feature, measure, morphology, segmentation
 
 
 def component_preprocesser(pred):

@@ -1,6 +1,7 @@
 import tensorflow as tf
 from keras import backend as K
 
+
 def mean_iou(y_true, y_pred):
     """
     Calculates the mean IoU of our predicted mask and the true mask at 
