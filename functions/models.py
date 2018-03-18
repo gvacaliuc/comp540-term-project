@@ -10,8 +10,6 @@ import numpy as np
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.linear_model import SGDRegressor
 
-from analytical import BasisTransformer
-
 
 class MiniBatchRegressor(BaseEstimator, RegressorMixin):
     """
@@ -60,3 +58,16 @@ class MiniBatchRegressor(BaseEstimator, RegressorMixin):
         """
 
         return self.regr_.predict(data)
+
+    def predict_images(self, images):
+        """
+        Predicts the output of our model for a set of provided images.  Note
+        that the number of channels should be the number of features this
+        model was trained with.
+
+        :param images: ndarray of shape N x X x Y x C
+        """
+
+        num_features = images.shape[-1]
+        data = images.reshape((-1, num_features))
+        return self.predict(data).reshape(images.shape)
