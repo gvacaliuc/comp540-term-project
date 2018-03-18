@@ -1,9 +1,11 @@
+import inspect
+
 import numpy as np
 from scipy import ndimage
 from skimage import feature, measure, morphology, segmentation
 from sklearn.base import BaseEstimator, TransformerMixin
 
-def preprocess(self, pred):
+def preprocess(pred):
     """
     Preprocesses our predictions to attempt to smooth and restore
     the nuclei shape as well as rid ourselves of undesirable salt.
@@ -80,7 +82,7 @@ class NucleiSegmenter(BaseEstimator, TransformerMixin):
 
         self.components_ = []
         for img in images:
-            if (np.unique(img) != np.array([0, 1])):
+            if (len(np.unique(img)) != 2):
                 raise ValueError("Images must be thresholded already.")
             self.components_.append(
                     watershed_cc(preprocess(img),
