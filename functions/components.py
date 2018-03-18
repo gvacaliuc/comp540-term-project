@@ -5,6 +5,7 @@ from scipy import ndimage
 from skimage import feature, measure, morphology, segmentation
 from sklearn.base import BaseEstimator, TransformerMixin
 
+
 def preprocess(pred):
     """
     Preprocesses our predictions to attempt to smooth and restore

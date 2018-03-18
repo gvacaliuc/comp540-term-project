@@ -7,8 +7,8 @@ performing the requisite RLE encoding.
 
 import numpy as np
 import pandas as pd
-from sklearn.base import BaseEstimator
 from skimage.transform import resize
+from sklearn.base import BaseEstimator
 
 
 def encode_rle_single_mask(nucleus_mask):
