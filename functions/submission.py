@@ -8,6 +8,7 @@ performing the requisite RLE encoding.
 import numpy as np
 import pandas as pd
 from sklearn.base import BaseEstimator
+from skimage.transform import resize
 
 
 def encode_rle_single_mask(nucleus_mask):
@@ -63,6 +64,15 @@ def encode_image_masks(nuclei_masks):
     return [encode_rle_single_mask(mask) for mask in nuclei_masks]
 
 
+def resize_im_list(imlist, shape):
+    """
+    Resizes each image in a list of images.
+    """
+
+    return [resize(im, shape, mode="constant", preserve_range=True)
+            for im in imlist]
+
+
 class RLEncoder(BaseEstimator):
     """
     Class to run length encode a set of image predictions.
@@ -90,7 +100,9 @@ class RLEncoder(BaseEstimator):
             raise ValueError("""metadata and prediction list must be the same
                     length.""")
 
-        encodings = [encode_image_masks(mask_list) for mask_list in predictions]
+        encodings = [encode_image_masks(resize_im_list(mask_list, orig_shape))
+                     for mask_list, orig_shape in zip(predictions,
+                                                      metadata.orig_shape)]
 
         #   Turn encodings into strings
         rle_list_to_str_list = lambda lst: [" ".join(["{} {}".format(*tup)
@@ -100,3 +112,29 @@ class RLEncoder(BaseEstimator):
 
         self.encoding_ = metadata.copy()
         self.encoding_["rle_mask_list"] = encodings
+
+        return self
+
+    def fit_transform(self, metadata, predictions):
+        """
+        Fits the estimator and returns the encoding_ as expected by Kaggle.
+        """
+
+        df = self.fit(metadata, predictions).encoding_
+
+        items_as_cols = df.apply(lambda x: pd.Series(x['rle_mask_list']),
+                                 axis=1)
+
+        # Keep original df index as a column so it's retained after melt
+        items_as_cols['orig_index'] = items_as_cols.index
+
+        melted_items = pd.melt(items_as_cols, id_vars='orig_index',
+                               var_name='sample_num', value_name='rle_mask')
+        melted_items.set_index('orig_index', inplace=True)
+
+        df = df.merge(melted_items, left_index=True, right_index=True).dropna()
+        df = df[["image_id", "rle_mask"]]
+        df = df.rename(columns={"image_id": "ImageId",
+                                "rle_mask": "EncodedPixels"})
+
+        return df
