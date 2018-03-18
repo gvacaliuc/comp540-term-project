@@ -7,12 +7,10 @@ from sklearn.externals import joblib
 def lda_predict(image):
     """
     uses lda to segment an image
-
     parameters
     __________
     image : np.array (128 x 128 x 9)
         the input image
-
     returns
     __________
     np.array (128 x 128)
@@ -30,12 +28,10 @@ def lda_predict(image):
 def lr_predict(image):
     """
     uses ElasticNet to segment an image
-
     parameters
     __________
     image : np.array (128 x 128 x 9)
         the input image
-
     returns
     __________
     np.array (128 x 128)
@@ -51,12 +47,10 @@ def lr_predict(image):
 def svr_predict(image):
     """
     uses SVR to segment an image
-
     parameters
     __________
     image : np.array (128 x 128 x 9)
         the input image
-
     returns
     __________
     np.array (128 x 128)

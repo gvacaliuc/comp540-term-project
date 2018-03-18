@@ -4,12 +4,10 @@ import numpy as np
 def has_white_background(image):
     """
     determines if an input image has a white background
-
     parameters
     __________
     image : np.array
         the raw image
-
     returns
     __________
     has_white_background : boolean
@@ -26,12 +24,10 @@ def has_white_background(image):
 def is_black_white(image):
     """
     determines if an input image is on a black/white scale
-
     parameters
     __________
     image : np.array
         the raw image
-
     returns
     __________
     is_black_white : boolean
@@ -50,12 +46,10 @@ def is_black_white(image):
 def has_purple_foreground(image):
     """
     determines if an input image has a purple foreground
-
     parameters
     __________
     image : np.array
         the raw image
-
     returns
     __________
     boolean
@@ -71,12 +65,10 @@ def has_purple_foreground(image):
 def is_sparse(image):
     """
     determines if an input image is sparse or not
-
     parameters
     __________
     image : np.array
         the raw image
-
     returns
     __________
     is_sparse : boolean
@@ -91,14 +83,12 @@ def is_sparse(image):
 def cluster_training_data(X_train, Y_train):
     """
     clusters the training data into modalities
-
     parameters
     __________
     x : np.array
         the training features
     y : np.array
         the training labels
-
     return
     __________
     python dictionary
@@ -145,12 +135,10 @@ def cluster_training_data(X_train, Y_train):
 def cluster_test_data(X_test):
     """
     clusters the test data into modalities
-
     parameters
     __________
     x : np.array
         the test features
-
     return
     __________
     python dictionary
