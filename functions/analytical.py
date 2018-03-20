@@ -43,7 +43,7 @@ def basis_map(image):
 
     num_features = 9
     IMG_MAX = 255.0
-    new_image = np.zeros((image.shape[:2], num_features))
+    new_image = np.zeros((*image.shape[:2], num_features))
 
     mean = np.mean(image)
     std = np.std(image)
