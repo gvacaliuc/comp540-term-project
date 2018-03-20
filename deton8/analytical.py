@@ -1,4 +1,5 @@
 import warnings
+import inspect
 
 import cv2
 import numpy as np
@@ -62,7 +63,7 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
 
         return self
 
-    def transform(self, images):
+    def fit_transform(self, images):
         """
         Takes an ndarray of images and increases the number of channels by 
         performing our basis map to each image.
@@ -117,8 +118,7 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
 
         # First 3 dimensions are original color space.
         new_image[:, :, :3] = image
-        # 4th dimension is the deviation of a mean of a pixel from the image
-        # mean.
+        # 4th dimension is the pixels z-score.
         new_image[:, :, 3] = (np.mean(image, axis = 2) - mean) / std
         # 5th dimension is the result of a bilateral filtering
         new_image[:, :, 4] = bilateral

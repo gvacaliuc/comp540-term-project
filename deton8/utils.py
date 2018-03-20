@@ -9,8 +9,8 @@ from sklearn.metrics import (confusion_matrix, f1_score, precision_score,
                              recall_score)
 from tqdm import tqdm
 
-from analytical import *
-from computer_vision import preprocess_image
+from .analytical import *
+from .computer_vision import preprocess_image
 
 
 def load_data(TRAIN_PATH="../data/stage1_train/",
@@ -220,3 +220,32 @@ class DataReader(object):
 
         matrix = self.as_matrix(*args, **kwargs)
         return (self.get_metadata(), matrix)
+
+
+
+def image_predict(image, model):
+    
+    num_features = image.shape[-1]
+    
+    return model.predict(
+            image.reshape((-1, num_features))).reshape(image.shape[:2])
+
+
+
+def get_model_results_global_thresh(model, data, labels):
+    """
+    Data and Labels should be the flattened data / labels.
+    """
+
+    results = []
+    columns = ["pred_thresh", "mask_thresh", "f1_score"]
+
+    for pred_thresh in np.arange(0, 1, 0.1):
+        for mask_thresh in np.arange(0, 1, 0.1):
+            y_pred = model.predict(data)
+            results.append((pred_thresh, 
+                            mask_thresh, 
+                            f1_score(labels > mask_thresh, 
+                                     y_pred > pred_thresh)))
+            
+    return pd.DataFrame(results, columns=columns)
