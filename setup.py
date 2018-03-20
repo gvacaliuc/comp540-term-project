@@ -13,4 +13,5 @@ setup(name='deton8',
       author_email='gabe.vacaliuc@gmail.com',
       license='MIT',
       packages=['deton8'],
+      python_requires='>=3',
       zip_safe=False)
