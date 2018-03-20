@@ -1,9 +1,9 @@
 from scipy.ndimage import binary_fill_holes as fill_holes
 
-from analytical import *
-from clustering import *
-from computer_vision import *
-from predict import *
+from .analytical import *
+from .clustering import *
+from .computer_vision import *
+from .predict import *
 
 
 def predict(image):
