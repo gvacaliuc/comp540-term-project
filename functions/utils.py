@@ -149,7 +149,8 @@ class DataReader(object):
         Function to read, resize, and process an image.
         """
 
-        image_id, _, _ = filename.lstrip(self.directory + "/").split("/")
+        path = filename.split("/")
+        image_id = path[len(self.directory.split("/")) - 1]
 
         img = imread(filename)[:, :, :self.num_channels]
         orig_shape = img.shape[:2]
