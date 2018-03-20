@@ -32,8 +32,8 @@ def load_data(TRAIN_PATH="../data/stage1_train/",
         the features of the test set
     """
     # Set some parameters
-    IMG_WIDTH = 128
-    IMG_HEIGHT = 128
+    IMG_WIDTH = 256
+    IMG_HEIGHT = 256
     IMG_CHANNELS = 3
 
     train_reader = DataReader(TRAIN_PATH, imsize = (IMG_HEIGHT, IMG_WIDTH),
@@ -119,7 +119,7 @@ def flatten_test_data(X_train):
 
 class DataReader(object):
 
-    def __init__(self, directory, train = True, imsize = (128, 128),
+    def __init__(self, directory, train = True, imsize = (256, 256),
                  num_channels = 3, scale = True):
         """
         Class to read in our training and testing data, resize it, and store

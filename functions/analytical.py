@@ -102,7 +102,7 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
                 exposure.rescale_intensity(image, in_range=(p2, p98)),
                 axis=2)
 
-        # TODO: This raisies a warning about precision loss, but I don't know why.
+        # TODO: This raisies a warning about precision loss, but idk why.
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
             equalize_hist = np.mean(
@@ -117,7 +117,8 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
 
         # First 3 dimensions are original color space.
         new_image[:, :, :3] = image
-        # 4th dimension is the deviation of a mean of a pixel from the image mean.
+        # 4th dimension is the deviation of a mean of a pixel from the image
+        # mean.
         new_image[:, :, 3] = (np.mean(image, axis = 2) - mean) / std
         # 5th dimension is the result of a bilateral filtering
         new_image[:, :, 4] = bilateral
@@ -139,7 +140,8 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
                 lower_j = max(j - half_width, 0)
                 upper_j = min(j + half_width, image.shape[1] - 1)
                 neighborhood = new_image[lower_i:upper_i, lower_j:upper_j, :8]
-                neighbor_dist = np.linalg.norm(neighborhood - new_image[i, j, :8],
+                neighbor_dist = np.linalg.norm(neighborhood 
+                                               - new_image[i, j, :8],
                                                axis = 2)
                 new_image[i, j, 8] = np.mean(neighbor_dist)
 

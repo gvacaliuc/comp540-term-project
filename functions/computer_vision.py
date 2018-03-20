@@ -2,7 +2,7 @@ import numpy as np
 from scipy.ndimage.measurements import label
 from skimage.filters import threshold_otsu
 from skimage.transform import resize
-
+import matplotlib.pyplot as plt
 IMG_MAX = 255.0
 
 def otsu(image):
@@ -24,7 +24,7 @@ def otsu(image):
     return np.multiply(image, mask)
 
 
-def non_max_component_suppression(X, percent=99, min_area=0):
+def NMCS(X, percent=.95, min_area=50):
     """
     performs non_max_suppression within connected components
 
@@ -33,7 +33,7 @@ def non_max_component_suppression(X, percent=99, min_area=0):
     X : np.array
         the image you are trying to suppress
     percentile : int
-        the percent of images you are accepting
+        the fraction of images you are accepting
     min_area : int
         the minimum area of a component you are accepting
 
@@ -44,21 +44,21 @@ def non_max_component_suppression(X, percent=99, min_area=0):
     """
     otsu_predictions = otsu(X)
     labeled, num_labels = label(otsu_predictions)
-    flattened_labels = labeled.reshape((128*128, 1))
-    flattened_otsu_predictions = otsu_predictions.reshape((128*128, 1))
+    flattened_labels = labeled.reshape((256*256, 1))
+    flattened_otsu_predictions = otsu_predictions.reshape((256*256, 1))
     for label_num in range(1, num_labels + 1):
         indices = np.where(flattened_labels == label_num)[0]
         component = flattened_otsu_predictions[indices]
-        val = np.percentile(component, 100 - percent)
+        val = np.percentile(component, 100*(1 - percent))
         if (len(indices) > min_area):
             flattened_otsu_predictions[indices] = np.multiply(
                 component, component >= val)
         else:
             flattened_otsu_predictions[indices] = 0
-    return flattened_otsu_predictions.reshape((128, 128))
+    return flattened_otsu_predictions.reshape((256, 256))
 
 
-def preprocess_image(img, imsize = (128, 128), scale = True):
+def preprocess_image(img, imsize = (256, 256), scale = True):
     """
     Processes an image per our specifications.
     """
