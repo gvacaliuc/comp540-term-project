@@ -19,7 +19,7 @@ def preprocess(pred):
 
     return morphology.binary_opening(pred)
 
-def watershed_cc(pred, nms_min_distance=3, watershed_line=True,
+def watershed_cc(pred, original_image, nms_min_distance=3, watershed_line=True,
                  return_mask=False):
     """
     Finds a set of components believed to be individual nuclei using the
@@ -42,6 +42,14 @@ def watershed_cc(pred, nms_min_distance=3, watershed_line=True,
             exclude_border = False,
             indices = False,
             min_distance = nms_min_distance)
+    local_maxes = list(zip(*np.where(peaks == 1)))
+
+    for coord1 in local_maxes:
+        local_maxes.remove(coord1)
+        for coord2 in local_maxes:
+            if np.linalg.norm(np.array(coord1) - np.array(coord2)) < 10 and np.linalg.norm(original_image[coord1] - original_image[coord2])/(np.linalg.norm(original_image[coord1] * np.linalg.norm(original_image[coord2]))) < 1.5 and coord2 in local_maxes:
+                local_maxes.remove(coord2)
+                peaks[coord2] = 0
     markers = measure.label(peaks)
     seg = segmentation.watershed(-dt, markers, mask=pred,
                                  watershed_line=watershed_line)
