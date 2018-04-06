@@ -7,10 +7,11 @@ from skimage.io import ImageCollection, imread
 from skimage.transform import resize
 from sklearn.metrics import (confusion_matrix, f1_score, precision_score,
                              recall_score)
-from tqdm import tqdm
 
 from .analytical import *
 from .computer_vision import preprocess_image
+from .computer_vision import NMCS
+import matplotlib.pyplot as plt
 
 
 def load_data(TRAIN_PATH="../data/stage1_train/",
@@ -36,11 +37,11 @@ def load_data(TRAIN_PATH="../data/stage1_train/",
     IMG_HEIGHT = 256
     IMG_CHANNELS = 3
 
-    train_reader = DataReader(TRAIN_PATH, imsize = (IMG_HEIGHT, IMG_WIDTH),
-                              num_channels = IMG_CHANNELS, scale = True)
-    test_reader = DataReader(TEST_PATH, train = False,
-                             imsize = (IMG_HEIGHT, IMG_WIDTH),
-                             num_channels = IMG_CHANNELS, scale = True)
+    train_reader = DataReader(TRAIN_PATH, imsize=(IMG_HEIGHT, IMG_WIDTH),
+                              num_channels=IMG_CHANNELS, scale=True)
+    test_reader = DataReader(TEST_PATH, train=False,
+                             imsize=(IMG_HEIGHT, IMG_WIDTH),
+                             num_channels=IMG_CHANNELS, scale=True)
 
     print("Getting and resizing train images and masks ... ")
     X_train = train_reader.as_matrix()
@@ -53,7 +54,7 @@ def load_data(TRAIN_PATH="../data/stage1_train/",
     return X_train, Y_train, X_test
 
 
-def flatten_data(data, labels = None, skip = 10):
+def flatten_data(data, labels=None, skip=10):
     """
     Flattens our image matrices and masks into training pairs.
     """
@@ -119,8 +120,8 @@ def flatten_test_data(X_train):
 
 class DataReader(object):
 
-    def __init__(self, directory, train = True, imsize = (256, 256),
-                 num_channels = 3, scale = True):
+    def __init__(self, directory, train=True, imsize=(256, 256),
+                 num_channels=3, scale=True):
         """
         Class to read in our training and testing data, resize it, and store
         some metadata, including the image id and original size.  If we need to
@@ -141,8 +142,8 @@ class DataReader(object):
         self.masks = []
         self.metadata_columns = ["image_id", "orig_shape"]
 
-        imloader = lambda f: self._imloader(f)
-        self.data_ic = ImageCollection(data_pattern, load_func = imloader)
+        def imloader(f): return self._imloader(f)
+        self.data_ic = ImageCollection(data_pattern, load_func=imloader)
 
     def _imloader(self, filename):
         """
@@ -196,9 +197,9 @@ class DataReader(object):
 
         return pd.DataFrame(
             self.image_metadata,
-            columns = self.metadata_columns)
+            columns=self.metadata_columns)
 
-    def as_matrix(self, start = 0, end = None, skip = 1):
+    def as_matrix(self, start=0, end=None, skip=1):
         """
         Returns a dense version of our training data as a matrix of shape
         (N, X, Y, D).  Clears out previously saved masks and metadata.
@@ -222,14 +223,12 @@ class DataReader(object):
         return (self.get_metadata(), matrix)
 
 
-
 def image_predict(image, model):
-    
-    num_features = image.shape[-1]
-    
-    return model.predict(
-            image.reshape((-1, num_features))).reshape(image.shape[:2])
 
+    num_features = image.shape[-1]
+
+    return model.predict(
+        image.reshape((-1, num_features))).reshape(image.shape[:2])
 
 
 def get_model_results_global_thresh(model, data, labels):
@@ -238,14 +237,25 @@ def get_model_results_global_thresh(model, data, labels):
     """
 
     results = []
-    columns = ["pred_thresh", "mask_thresh", "f1_score"]
+    columns = ["percent_thresh", "mask_thresh", "f1_score"]
+    if len(data.shape) >= 4:
+        labels = labels.reshape((len(labels)*256*256))
 
-    for pred_thresh in np.arange(0, 1, 0.1):
-        for mask_thresh in np.arange(0, 1, 0.1):
+    for percent_thresh in np.arange(.9, 1, 0.01):
+        for mask_thresh in np.arange(.3, .7, 0.1):
             y_pred = model.predict(data)
-            results.append((pred_thresh, 
-                            mask_thresh, 
-                            f1_score(labels > mask_thresh, 
-                                     y_pred > pred_thresh)))
-            
+            if len(y_pred.shape) < 4:
+                y_pred = np.array([NMCS(y_pred[256*256*i:256*256*(i+1)].reshape((256, 256)), \
+                               percent=percent_thresh)
+                                for i in range(int(len(y_pred) / (256*256)))])
+            else:
+                y_pred = np.array([NMCS(y_pred[i], percent=percent_thresh)
+                                for i in range(int(len(y_pred)))])
+            y_pred = y_pred.reshape((len(y_pred)*256*256))
+            results.append((percent_thresh,
+                            mask_thresh,
+                            f1_score(labels > mask_thresh,
+                                     y_pred > 0)))
+
+
     return pd.DataFrame(results, columns=columns)
