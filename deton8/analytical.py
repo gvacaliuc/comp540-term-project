@@ -5,8 +5,10 @@ import cv2
 import numpy as np
 from skimage import exposure
 from tqdm import tqdm
+from skimage.morphology import disk
 
 from sklearn.base import BaseEstimator, TransformerMixin
+import matplotlib.pyplot as plt
 
 
 class BasisTransformer(BaseEstimator, TransformerMixin):
@@ -16,8 +18,8 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
                  bilateral_sigma_color=75,
                  bilateral_sigma_space=75,
                  equalize_hist_clip_limit=0.03,
-                 dialation_kernel=np.ones((5, 5)),
-                 dialation_iters=2):
+                 dialation_kernel=disk(radius = 3),
+                 dialation_iters=1):
         """
         :param bilateral_d: Diameter of each pixel neighborhood that is used
         during bilateral filtering.
@@ -90,7 +92,7 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
         :return: the image features
         """
 
-        num_features = 6
+        num_features = 8
         IMG_MAX = 255.0
         new_image = np.zeros((*image.shape[:2], num_features))
 
@@ -102,7 +104,7 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
                 self.bilateral_d,
                 self.bilateral_sigma_color,
                 self.bilateral_sigma_space) / IMG_MAX
-        p2, p98 = np.percentile(image, (2, 98))
+        p2, p98 = np.percentile(image, (50, 99))
         img_rescale = np.mean(
                 exposure.rescale_intensity(image, in_range=(p2, p98)),
                 axis=2)
@@ -110,10 +112,8 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
         # TODO: This raisies a warning about precision loss, but idk why.
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
-            equalize_hist = np.mean(
-                exposure.equalize_adapthist(
-                    image, clip_limit=self.equalize_hist_clip_limit),
-                axis=2)
+            equalize_hist = exposure.equalize_adapthist(np.mean(image * IMG_MAX, axis=2).astype("uint8"),
+                                                        clip_limit=self.equalize_hist_clip_limit)
 
         dilate = np.mean(cv2.dilate(image,
                                     self.dialation_kernel,
@@ -121,16 +121,16 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
                          axis=2)
 
         # First 3 dimensions are original color space.
-        new_image[:, :, 0] = image
+        new_image[:, :, :3] = image
         # 4th dimension is the pixels z-score.
-        new_image[:, :, 1] = (np.mean(image, axis = 2) - mean) / std
+        new_image[:, :, 3] = (np.mean(image, axis = 2) - mean) / std
         # 5th dimension is the result of a bilateral filtering
-        new_image[:, :, 2] = bilateral
+        new_image[:, :, 4] = bilateral
         # 6th dimension is the rescaled image
-        new_image[:, :, 3] = img_rescale
+        new_image[:, :, 5] = img_rescale
         # 7th dimension is the result of a adaptive histogram
-        new_image[:, :, 4] = equalize_hist
+        new_image[:, :, 6] = equalize_hist
         # 8th dimension is a dialation
-        new_image[:, :, 5] = dilate
+        new_image[:, :, 7] = dilate
 
         return np.nan_to_num(new_image)

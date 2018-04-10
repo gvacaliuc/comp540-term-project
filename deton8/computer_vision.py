@@ -7,6 +7,7 @@ from skimage.filters import threshold_otsu
 from skimage.transform import resize
 from sklearn.base import TransformerMixin, BaseEstimator
 import matplotlib.pyplot as plt
+from scipy.ndimage.morphology import binary_fill_holes
 
 IMG_MAX = 255.0
 
@@ -198,7 +199,7 @@ class ColorMatcher(BaseEstimator, TransformerMixin):
         """
 
         greyscale = np.rollaxis(np.stack([rgb2gray(image)]*3), 0, 3)
-        
+
         return match_color_with_source_dist(
-                greyscale, self.cov_source_, 
+                greyscale, self.cov_source_,
                 self.mu_source_, self.mode, self.eps)

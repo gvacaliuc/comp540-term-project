@@ -17,10 +17,10 @@ class MiniBatchRegressor(BaseEstimator, RegressorMixin):
     and fits and predicts our image data.
     """
 
-    def __init__(self, 
-            regressor = SGDRegressor(), 
-            batch_size = 400, 
-            num_iters = 400, 
+    def __init__(self,
+            regressor = SGDRegressor(),
+            batch_size = 400,
+            num_iters = 400,
             verbose = False,
             tqdm = lambda x: x):
         """
@@ -37,12 +37,12 @@ class MiniBatchRegressor(BaseEstimator, RegressorMixin):
 
     def fit(self, data, labels):
         """
-        Trains our regressor for the number of iterations provided 
-        as well as 
+        Trains our regressor for the number of iterations provided
+        as well as
         """
 
         self.regr_ = self.regressor
-        
+
         arange = np.arange(data.shape[0])
 
         for itr in self.tqdm(range(self.num_iters)):
@@ -50,14 +50,14 @@ class MiniBatchRegressor(BaseEstimator, RegressorMixin):
             if self.verbose:
                 print("Iteration {}/{}".format(itr, self.num_iters))
 
-            self.regr_.partial_fit(data[batch_idx], labels[batch_idx])
+            self.regressor.partial_fit(data[batch_idx], labels[batch_idx])
 
     def predict(self, data):
         """
         Predicts the output of our model on the provided data.
         """
 
-        return self.regr_.predict(data)
+        return self.regressor.predict(data)
 
     def predict_images(self, images):
         """

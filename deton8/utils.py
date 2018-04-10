@@ -69,55 +69,6 @@ def flatten_data(data, labels=None, skip=10):
 
     return data
 
-
-def flatten_training_data(X_train, Y_train, skip=10):
-    """
-    inputs an N x X x Y x D feature training set and corresponding
-    N x X x Y x 1 label training set and flattens them into a
-    NXY x D feature set (a.k.a. a pixel-wise feature set)
-    and a NXY x 1 label set
-
-    parameters
-    __________
-    X_train : np.array of dimensions N x X x Y x D
-        the training features
-    Y_train : np.array of dimensions N x X x Y x 1
-        the training labels
-    skip : int
-        the number of elements you want to skip in between selection
-
-    return
-    __________
-    flattened_features : np.array of dimensions NXY x D
-        the flattened features of the training set
-    labels : np.array of dimensions NXY x 1
-        the flattened labels of the training set
-
-    """
-
-    return flatten_data(X_train, Y_train, skip=skip)
-
-
-def flatten_test_data(X_train):
-    """
-    inputs an N x X x Y x D feature training set flattens it into a
-    NXY x D feature set (a.k.a. a pixel-wise feature set)
-
-    parameters
-    __________
-    X_train : np.array of dimensions N x X x Y x D
-        the training features
-
-    return
-    __________
-    flattened_features : np.array of dimensions NXY x D
-        the flattened features of the training set
-
-    """
-
-    return flatten_data(X_train, Y_train, skip=skip)
-
-
 class DataReader(object):
 
     def __init__(self, directory, train=True, imsize=(256, 256),
@@ -223,14 +174,6 @@ class DataReader(object):
         return (self.get_metadata(), matrix)
 
 
-def image_predict(image, model):
-
-    num_features = image.shape[-1]
-
-    return model.predict(
-        image.reshape((-1, num_features))).reshape(image.shape[:2])
-
-
 def get_model_results_global_thresh(model, data, labels):
     """
     Data and Labels should be the flattened data / labels.
@@ -238,16 +181,18 @@ def get_model_results_global_thresh(model, data, labels):
 
     results = []
     columns = ["percent_thresh", "mask_thresh", "f1_score"]
+
+
     if len(data.shape) >= 4:
         labels = labels.reshape((len(labels)*256*256))
-
-    for percent_thresh in np.arange(.9, 1, 0.01):
-        for mask_thresh in np.arange(.3, .7, 0.1):
+    for percent_thresh in np.arange(.9, 1, 0.015):
+        for mask_thresh in np.arange(.3, .7, 0.15):
             y_pred = model.predict(data)
             if len(y_pred.shape) < 4:
                 y_pred = np.array([NMCS(y_pred[256*256*i:256*256*(i+1)].reshape((256, 256)), \
                                percent=percent_thresh)
                                 for i in range(int(len(y_pred) / (256*256)))])
+
             else:
                 y_pred = np.array([NMCS(y_pred[i], percent=percent_thresh)
                                 for i in range(int(len(y_pred)))])
@@ -259,3 +204,6 @@ def get_model_results_global_thresh(model, data, labels):
 
 
     return pd.DataFrame(results, columns=columns)
+
+def f1(predictions, labels):
+    return np.mean(f1_score((np.array(labels).astype('uint8') > 0).flatten(), (np.array(predictions).astype('uint8') > .5).flatten()))

@@ -4,20 +4,8 @@ import numpy as np
 from scipy import ndimage
 from skimage import feature, measure, morphology, segmentation
 from sklearn.base import BaseEstimator, TransformerMixin
+import matplotlib.pyplot as plt
 
-
-def preprocess(pred):
-    """
-    Preprocesses our predictions to attempt to smooth and restore
-    the nuclei shape as well as rid ourselves of undesirable salt.
-
-    :param pred: a binary array of our predictions
-    :type pred: np.ndarray
-
-    :return: our preprocessed predictions
-    """
-
-    return morphology.binary_opening(pred)
 
 def watershed_cc(pred, original_image, nms_min_distance=3, watershed_line=True,
                  return_mask=False):
@@ -43,11 +31,10 @@ def watershed_cc(pred, original_image, nms_min_distance=3, watershed_line=True,
             indices = False,
             min_distance = nms_min_distance)
     local_maxes = list(zip(*np.where(peaks == 1)))
-
     for coord1 in local_maxes:
         local_maxes.remove(coord1)
         for coord2 in local_maxes:
-            if np.linalg.norm(np.array(coord1) - np.array(coord2)) < 10 and np.linalg.norm(original_image[coord1] - original_image[coord2])/(np.linalg.norm(original_image[coord1] * np.linalg.norm(original_image[coord2]))) < 1.5 and coord2 in local_maxes:
+            if np.linalg.norm(np.array(coord1) - np.array(coord2)) < 10 and np.linalg.norm(original_image[coord1] - original_image[coord2])/(np.linalg.norm(original_image[coord1] * np.linalg.norm(original_image[coord2]))) < .1 and coord2 in local_maxes:
                 local_maxes.remove(coord2)
                 peaks[coord2] = 0
     markers = measure.label(peaks)
@@ -61,6 +48,7 @@ def watershed_cc(pred, original_image, nms_min_distance=3, watershed_line=True,
         return ccs, seg
     else:
         return ccs
+
 
 
 class NucleiSegmenter(BaseEstimator, TransformerMixin):
