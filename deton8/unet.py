@@ -8,6 +8,8 @@ from keras.callbacks import LearningRateScheduler, ModelCheckpoint
 import tensorflow as tf
 
 class UNet(object):
+    
+    
     def get_generator(self, x_train, y_train, batch_size):
         data_generator = ImageDataGenerator(
                 horizontal_flip=True,
@@ -41,7 +43,7 @@ class UNet(object):
         return -1*self.dice_coef(y_true, y_pred)
 
     def __init__(self):
-        input_layer = Input(shape=(256, 256, 8))
+        input_layer = Input(shape=(256, 256, 2))
         c1 = Conv2D(filters=8, kernel_size=(3,3), activation='relu', padding='same')(input_layer)
         l = MaxPool2D(strides=(2,2))(c1)
         c2 = Conv2D(filters=16, kernel_size=(3,3), activation='relu', padding='same')(l)
@@ -64,11 +66,11 @@ class UNet(object):
                            metrics=[self.dice_coef, self.mean_iou, 'acc'])
         self.model.load_weights("../weights/unet_weights.h5")
 
-    def fit(x_train, y_train, x_val, y_val):
-        self.model.fit_generator(get_generator(x_train, np.expand_dims(y_train, axis = 3), 8),
+    def fit(self, x_train, y_train, x_val, y_val):
+        self.model.fit_generator(self.get_generator(x_train, np.expand_dims(y_train, axis = 3), 8),
                            steps_per_epoch = 25,
                            validation_data = (x_val, np.expand_dims(y_val, axis = 3)),
                            epochs=500, verbose=True)
 
-    def predict(x_test):
+    def predict(self, x_test):
         return self.model.predict(x_test)

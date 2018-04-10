@@ -51,16 +51,14 @@ def encode_image_masks(nuclei_masks):
     """
     Performs the run length encoding on each mask of an iterable.
     """
-
-    return [encode_rle_single_mask(mask) for mask in nuclei_masks]
+    return [rle_encode(mask) for mask in nuclei_masks]
 
 
 def resize_im_list(imlist, shape):
     """
     Resizes each image in a list of images.
     """
-
-    return [resize(im, shape, mode="constant", preserve_range=True)
+    return [resize(im, shape, mode="constant", preserve_range=True) > 0
             for im in imlist]
 
 
