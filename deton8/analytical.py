@@ -4,20 +4,20 @@ import inspect
 import cv2
 import numpy as np
 from skimage import exposure
+from tqdm import tqdm
 
 from sklearn.base import BaseEstimator, TransformerMixin
-    
+
 
 class BasisTransformer(BaseEstimator, TransformerMixin):
 
-    def __init__(self, 
+    def __init__(self,
                  bilateral_d=2,
                  bilateral_sigma_color=75,
                  bilateral_sigma_space=75,
                  equalize_hist_clip_limit=0.03,
                  dialation_kernel=np.ones((5, 5)),
-                 dialation_iters=2,
-                 neighborhood_size=(3, 3)):
+                 dialation_iters=2):
         """
         :param bilateral_d: Diameter of each pixel neighborhood that is used
         during bilateral filtering.
@@ -51,21 +51,25 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
 
     def fit(self, images):
         """
-        Takes an ndarray of images and increases the number of channels by 
+        Takes an ndarray of images and increases the number of channels by
         performing our basis map to each image.
 
         :param images: an array of shape N x X x Y x C
 
         :return self: the fitted estimator
         """
+        self.features_ = []
+        for i in tqdm(range(len(images)), unit="pair"):
+            self.features_.append(self._basis_map(images[i]))
 
-        self.features_ = np.stack([ self._basis_map(im) for im in images ])
+
+        self.features_ = np.stack(self.features_)
 
         return self
 
     def fit_transform(self, images):
         """
-        Takes an ndarray of images and increases the number of channels by 
+        Takes an ndarray of images and increases the number of channels by
         performing our basis map to each image.
 
         :param images: an array of shape N x X x Y x C
@@ -80,13 +84,13 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
         Maps each pixel of an image to a set of features.
 
         :param image: the input image (height x width x channels)
-        
+
         The rest of the parameters are documented in BasisTransformer.
-        
+
         :return: the image features
         """
 
-        num_features = 9
+        num_features = 6
         IMG_MAX = 255.0
         new_image = np.zeros((*image.shape[:2], num_features))
 
@@ -117,32 +121,16 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
                          axis=2)
 
         # First 3 dimensions are original color space.
-        new_image[:, :, :3] = image
+        new_image[:, :, 0] = image
         # 4th dimension is the pixels z-score.
-        new_image[:, :, 3] = (np.mean(image, axis = 2) - mean) / std
+        new_image[:, :, 1] = (np.mean(image, axis = 2) - mean) / std
         # 5th dimension is the result of a bilateral filtering
-        new_image[:, :, 4] = bilateral
+        new_image[:, :, 2] = bilateral
         # 6th dimension is the rescaled image
-        new_image[:, :, 5] = img_rescale
+        new_image[:, :, 3] = img_rescale
         # 7th dimension is the result of a adaptive histogram
-        new_image[:, :, 6] = equalize_hist
+        new_image[:, :, 4] = equalize_hist
         # 8th dimension is a dialation
-        new_image[:, :, 7] = dilate
-
-        for i in range(len(image)):
-            for j in range(len(image)):
-
-                half_width = self.neighborhood_size[0] // 2;
-                half_height = self.neighborhood_size[1] // 2;
-
-                lower_i = max(i - half_height, 0)
-                upper_i = min(i + half_height, image.shape[0] - 1)
-                lower_j = max(j - half_width, 0)
-                upper_j = min(j + half_width, image.shape[1] - 1)
-                neighborhood = new_image[lower_i:upper_i, lower_j:upper_j, :8]
-                neighbor_dist = np.linalg.norm(neighborhood 
-                                               - new_image[i, j, :8],
-                                               axis = 2)
-                new_image[i, j, 8] = np.mean(neighbor_dist)
+        new_image[:, :, 5] = dilate
 
         return np.nan_to_num(new_image)

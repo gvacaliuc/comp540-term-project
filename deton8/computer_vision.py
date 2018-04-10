@@ -28,7 +28,7 @@ def otsu(image):
     return np.multiply(image, mask)
 
 
-def NMCS(X, percent=.95, min_area=50):
+def postprocess(X, min_area=0):
     """
     performs non_max_suppression within connected components
 
@@ -50,16 +50,14 @@ def NMCS(X, percent=.95, min_area=50):
     labeled, num_labels = label(otsu_predictions)
     flattened_labels = labeled.reshape((256*256, 1))
     flattened_otsu_predictions = otsu_predictions.reshape((256*256, 1))
-    for label_num in range(1, num_labels + 1):
+    for label_num in range(0, num_labels + 4):
         indices = np.where(flattened_labels == label_num)[0]
         component = flattened_otsu_predictions[indices]
-        val = np.percentile(component, 100*(1 - percent))
         if (len(indices) > min_area):
-            flattened_otsu_predictions[indices] = np.multiply(
-                component, component >= val)
+            flattened_otsu_predictions[indices] = component
         else:
             flattened_otsu_predictions[indices] = 0
-    return flattened_otsu_predictions.reshape((256, 256))
+    return binary_fill_holes(flattened_otsu_predictions.reshape((256, 256)))
 
 
 def preprocess_image(img, imsize = (256, 256), scale = True):
@@ -154,7 +152,7 @@ def match_color(target_img, source_img, mode='pca', eps=1e-5):
 
 class ColorMatcher(BaseEstimator, TransformerMixin):
     """
-    Given a set of color images to match, transforms a set of given images to 
+    Given a set of color images to match, transforms a set of given images to
     match the color distribution.
     """
 
@@ -198,11 +196,11 @@ class ColorMatcher(BaseEstimator, TransformerMixin):
         centered = style_images - per_image_channel_mean
         flattened = centered.reshape((-1, channels))
 
-        self.cov_source_ = (flattened.T.dot(flattened) 
-                            / np.prod(style_images.shape[:3]) 
+        self.cov_source_ = (flattened.T.dot(flattened)
+                            / np.prod(style_images.shape[:3])
                             + self.eps * np.eye(channels))
 
-        #   Handle Cholesky 
+        #   Handle Cholesky
         self.cholesky_ = np.linalg.cholesky(self.cov_source_)
 
         #   Handle PCA
@@ -231,11 +229,11 @@ class ColorMatcher(BaseEstimator, TransformerMixin):
         """
 
         return self.fit(style_images).transform(content_images)
-        
+
     def _compute_projection(self, image):
         """
         Computes the projection of a single image.
         """
-        
+
         return match_color_with_source_dist(
                 image, self.cov_source_, self.mu_source_, self.mode, self.eps)
