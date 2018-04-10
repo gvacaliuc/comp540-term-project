@@ -2,6 +2,7 @@ import inspect
 
 import numpy as np
 from scipy.ndimage.measurements import label
+from skimage.color import rgb2gray
 from skimage.filters import threshold_otsu
 from skimage.transform import resize
 from sklearn.base import TransformerMixin, BaseEstimator
@@ -108,47 +109,7 @@ def match_color_with_source_dist(
         ts = np.linalg.inv(Qt).dot(QtCsQt).dot(np.linalg.inv(Qt)).dot(t)
     matched_img = ts.reshape(*target_img.transpose(2,0,1).shape).transpose(1,2,0)
     matched_img += mu_s
-    matched_img[matched_img>1] = 1
-    matched_img[matched_img<0] = 0
-    return matched_img
-
-
-def match_color(target_img, source_img, mode='pca', eps=1e-5):
-    '''
-    Matches the colour distribution of the target image to that of the source image
-    using a linear transform.
-    Images are expected to be of form (w,h,c) and float in [0,1].
-    Modes are chol, pca or sym for different choices of basis.
-    '''
-    mu_t = target_img.mean(0).mean(0)
-    t = target_img - mu_t
-    t = t.transpose(2,0,1).reshape(3,-1)
-    Ct = t.dot(t.T) / t.shape[1] + eps * np.eye(t.shape[0])
-    mu_s = source_img.mean(0).mean(0)
-    s = source_img - mu_s
-    s = s.transpose(2,0,1).reshape(3,-1)
-    Cs = s.dot(s.T) / s.shape[1] + eps * np.eye(s.shape[0])
-    if mode == 'chol':
-        chol_t = np.linalg.cholesky(Ct)
-        chol_s = np.linalg.cholesky(Cs)
-        ts = chol_s.dot(np.linalg.inv(chol_t)).dot(t)
-    if mode == 'pca':
-        eva_t, eve_t = np.linalg.eigh(Ct)
-        Qt = eve_t.dot(np.sqrt(np.diag(eva_t))).dot(eve_t.T)
-        eva_s, eve_s = np.linalg.eigh(Cs)
-        Qs = eve_s.dot(np.sqrt(np.diag(eva_s))).dot(eve_s.T)
-        ts = Qs.dot(np.linalg.inv(Qt)).dot(t)
-    if mode == 'sym':
-        eva_t, eve_t = np.linalg.eigh(Ct)
-        Qt = eve_t.dot(np.sqrt(np.diag(eva_t))).dot(eve_t.T)
-        Qt_Cs_Qt = Qt.dot(Cs).dot(Qt)
-        eva_QtCsQt, eve_QtCsQt = np.linalg.eigh(Qt_Cs_Qt)
-        QtCsQt = eve_QtCsQt.dot(np.sqrt(np.diag(eva_QtCsQt))).dot(eve_QtCsQt.T)
-        ts = np.linalg.inv(Qt).dot(QtCsQt).dot(np.linalg.inv(Qt)).dot(t)
-    matched_img = ts.reshape(*target_img.transpose(2,0,1).shape).transpose(1,2,0)
-    matched_img += mu_s
-    matched_img[matched_img>1] = 1
-    matched_img[matched_img<0] = 0
+    matched_img = np.clip(matched_img, 0, 1)
     return matched_img
 
 
@@ -234,8 +195,12 @@ class ColorMatcher(BaseEstimator, TransformerMixin):
         
     def _compute_projection(self, image):
         """
-        Computes the projection of a single image.
+        Computes the projection of a single image.  Before matching color, we
+        convert the rgb to greyscale.
         """
+
+        greyscale = np.rollaxis(np.stack([rgb2gray(image)]*3), 0, 3)
         
         return match_color_with_source_dist(
-                image, self.cov_source_, self.mu_source_, self.mode, self.eps)
+                greyscale, self.cov_source_, 
+                self.mu_source_, self.mode, self.eps)
