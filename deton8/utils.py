@@ -10,7 +10,7 @@ from sklearn.metrics import (confusion_matrix, f1_score, precision_score,
 
 from .analytical import *
 from .computer_vision import preprocess_image
-from .computer_vision import NMCS
+from .computer_vision import postprocess
 import matplotlib.pyplot as plt
 
 
@@ -189,12 +189,12 @@ def get_model_results_global_thresh(model, data, labels):
         for mask_thresh in np.arange(.3, .7, 0.15):
             y_pred = model.predict(data)
             if len(y_pred.shape) < 4:
-                y_pred = np.array([NMCS(y_pred[256*256*i:256*256*(i+1)].reshape((256, 256)), \
+                y_pred = np.array([postprocess(y_pred[256*256*i:256*256*(i+1)].reshape((256, 256)), \
                                percent=percent_thresh)
                                 for i in range(int(len(y_pred) / (256*256)))])
 
             else:
-                y_pred = np.array([NMCS(y_pred[i], percent=percent_thresh)
+                y_pred = np.array([postprocess(y_pred[i], percent=percent_thresh)
                                 for i in range(int(len(y_pred)))])
             y_pred = y_pred.reshape((len(y_pred)*256*256))
             results.append((percent_thresh,

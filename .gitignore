@@ -103,3 +103,4 @@ ENV/
 # data
 data/
 *.swp
+notebooks/*.html
