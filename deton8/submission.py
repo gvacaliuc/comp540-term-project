@@ -41,8 +41,7 @@ def encode_mask(mask):
     :return: a list of strings corresponding to the run length encoding of this
              mask.
     """
-
-    masks = [(mask == ind).astype(mask.dtype) for ind in range(mask.max() + 1)]
+    nuclei_masks = [(mask == ind).astype(mask.dtype) for ind in range(1, int(mask.max() + 1))]
     return [rle_to_string(rle_encode(mask)) for mask in nuclei_masks]
 
 
@@ -61,8 +60,8 @@ class RLEncoder(BaseEstimator):
         :param metadata: a dataframe with two columns per image: image_id and
                          orig_shape
         :type metadata: pandas.DataFrame
-        :param predictions: a numpy array of shape: N x X x Y. Each image in 
-                            predictions corresponds to a mask.  Each image 
+        :param predictions: a numpy array of shape: N x X x Y. Each image in
+                            predictions corresponds to a mask.  Each image
                             should be discrete valued, such that image == i
                             produces a binary mask of a single nucleus.
         :type predictions: numpy.ndarray
@@ -72,8 +71,8 @@ class RLEncoder(BaseEstimator):
             raise ValueError("""metadata and prediction list must be the same
                     length.""")
 
-        encodings = [encode_masks(
-            resize(mask, orig_shape, mode="constant", preserve_range=True))
+        encodings = [encode_mask(
+            resize(mask_list, orig_shape, mode="constant", preserve_range=True))
             for mask_list, orig_shape in zip(predictions, metadata.orig_shape)]
 
         self.encoding_ = metadata.copy()
