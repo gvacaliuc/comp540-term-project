@@ -4,10 +4,11 @@ import numpy as np
 from scipy import ndimage
 from skimage import feature, measure, morphology, segmentation
 from sklearn.base import BaseEstimator, TransformerMixin
+from .computer_vision import postprocess
 import matplotlib.pyplot as plt
 
 
-def watershed_cc(pred, original_image, nms_min_distance=3, watershed_line=True,
+def watershed_cc(pred, nms_min_distance=3, watershed_line=True,
                  return_mask=False):
     """
     Finds a set of components believed to be individual nuclei using the
@@ -34,20 +35,13 @@ def watershed_cc(pred, original_image, nms_min_distance=3, watershed_line=True,
     for coord1 in local_maxes:
         local_maxes.remove(coord1)
         for coord2 in local_maxes:
-            if np.linalg.norm(np.array(coord1) - np.array(coord2)) < 10 and np.linalg.norm(original_image[coord1] - original_image[coord2])/(np.linalg.norm(original_image[coord1] * np.linalg.norm(original_image[coord2]))) < .1 and coord2 in local_maxes:
+            if np.linalg.norm(np.array(coord1) - np.array(coord2)) < 10 and coord2 in local_maxes:
                 local_maxes.remove(coord2)
                 peaks[coord2] = 0
     markers = measure.label(peaks)
     seg = segmentation.watershed(-dt, markers, mask=pred,
                                  watershed_line=watershed_line)
-
-    #   get a component for everything but background
-    ccs = [seg == lbl for lbl in np.unique(seg)[1:]]
-
-    if return_mask:
-        return ccs, seg
-    else:
-        return ccs
+    return seg
 
 
 
@@ -82,9 +76,9 @@ class NucleiSegmenter(BaseEstimator, TransformerMixin):
             if (len(np.unique(img)) != 2):
                 raise ValueError("Images must be thresholded already.")
             self.components_.append(
-                    watershed_cc(preprocess(img),
+                    np.array(watershed_cc(postprocess(img),
                                  nms_min_distance=self.nms_min_distance,
-                                 watershed_line=self.watershed_line))
+                                 watershed_line=self.watershed_line)))
 
         return self
 
