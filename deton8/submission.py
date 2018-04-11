@@ -10,56 +10,40 @@ import pandas as pd
 from skimage.transform import resize
 from sklearn.base import BaseEstimator
 
+def rle_encode(mask):
+    pixels = mask.T.flatten()
+    # We need to allow for cases where there is a '1' at either end of the sequence.
+    # We do this by padding with a zero at each end when needed.
+    use_padding = False
+    if pixels[0] or pixels[-1]:
+        use_padding = True
+        pixel_padded = np.zeros([len(pixels) + 2], dtype=pixels.dtype)
+        pixel_padded[1:-1] = pixels
+        pixels = pixel_padded
+    rle = np.where(pixels[1:] != pixels[:-1])[0] + 2
+    if use_padding:
+        rle = rle - 1
+    rle[1::2] = rle[1::2] - rle[:-1:2]
+    return rle
 
-def rle_encode(x):
+
+def rle_to_string(runs):
+    return ' '.join(str(x) for x in runs)
+
+
+def encode_mask(mask):
     """
-    x: numpy array of shape (height, width), 1 - mask, 0 - background
-    Returns run length as list
-    """
-    dots = np.where(x.T.flatten()==1)[0] # .T sets Fortran order down-then-right
-    run_lengths = []
-    prev = -2
-    for b in dots:
-        if (b>prev+1): run_lengths.extend((b+1, 0))
-        run_lengths[-1] += 1
-        prev = b
-    return list(zip(run_lengths[::2], run_lengths[1::2]))
+    Performs the run length encoding for a given mask.  The mask is expected
+    to be a single entry of the input to RLEncoder.fit.
 
+    :param mask: an image of shape X x Y.  Discrete Valued.
 
-def decode_rle(encoding, shape):
-    """
-    Decodes a run-length encoding into a mask, given a shape.  Used to test
-    the encoding method.
-
-    :param encoding: a list of tuples holding the run-length encoding
-    :param shape: a tuple holding the height and with of our mask
-    :return mask: the rebuilt mask
+    :return: a list of strings corresponding to the run length encoding of this
+             mask.
     """
 
-    mask = np.zeros(shape).flatten()
-
-    for tup in encoding:
-        true_ind = tup[0] - 1
-        mask[true_ind:(true_ind + tup[1])] = 1
-
-    mask = mask.reshape(shape, order = "F")
-
-    return mask
-
-
-def encode_image_masks(nuclei_masks):
-    """
-    Performs the run length encoding on each mask of an iterable.
-    """
-    return [rle_encode(mask) for mask in nuclei_masks]
-
-
-def resize_im_list(imlist, shape):
-    """
-    Resizes each image in a list of images.
-    """
-    return [resize(im, shape, mode="constant", preserve_range=True) > 0
-            for im in imlist]
+    masks = [(mask == ind).astype(mask.dtype) for ind in range(mask.max() + 1)]
+    return [rle_to_string(rle_encode(mask)) for mask in nuclei_masks]
 
 
 class RLEncoder(BaseEstimator):
@@ -77,27 +61,20 @@ class RLEncoder(BaseEstimator):
         :param metadata: a dataframe with two columns per image: image_id and
                          orig_shape
         :type metadata: pandas.DataFrame
-        :param predictions: a list of lists of binary 2D numpy arrays which
-                            have already been reshapen according to the
-                            original shape in the metadata.  Each sublist
-                            indicates a list of nuclei predictions.  Each array
-                            in the sublist is an individual nucleus mask.
-        :type predictions: iterable
+        :param predictions: a numpy array of shape: N x X x Y. Each image in 
+                            predictions corresponds to a mask.  Each image 
+                            should be discrete valued, such that image == i
+                            produces a binary mask of a single nucleus.
+        :type predictions: numpy.ndarray
         """
 
         if (len(metadata) != len(predictions)):
             raise ValueError("""metadata and prediction list must be the same
                     length.""")
 
-        encodings = [encode_image_masks(resize_im_list(mask_list, orig_shape))
-                     for mask_list, orig_shape in zip(predictions,
-                                                      metadata.orig_shape)]
-
-        #   Turn encodings into strings
-        rle_list_to_str_list = lambda lst: [" ".join(["{} {}".format(*tup)
-                                                      for tup in code])
-                                            for code in lst]
-        encodings = [rle_list_to_str_list(rle_list) for rle_list in encodings]
+        encodings = [encode_masks(
+            resize(mask, orig_shape, mode="constant", preserve_range=True))
+            for mask_list, orig_shape in zip(predictions, metadata.orig_shape)]
 
         self.encoding_ = metadata.copy()
         self.encoding_["rle_mask_list"] = encodings
