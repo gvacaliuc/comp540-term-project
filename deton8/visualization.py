@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import numpy as np
 
-from .utils import image_predict
 from .components import watershed_cc
 from .computer_vision import ColorMatcher
 
@@ -55,7 +54,7 @@ def plot_color_transfer_results(trainImages, style_indices, grid_size=(5, 5)):
     expanded_grid_size = (grid_size[0], grid_size[1] * 2)
 
     gs = GridSpec(*expanded_grid_size)
-    
+
     left_ims = content_images.reshape((*grid_size, *content_images.shape[1:]))
     right_ims = transformed_images.reshape((*grid_size, *transformed_images.shape[1:]))
 
