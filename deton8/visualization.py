@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import numpy as np
 
-from .utils import image_predict
 from .components import watershed_cc
 from .computer_vision import ColorMatcher
 
@@ -38,7 +37,11 @@ def plot_segmentation(features, pred, mask):
     plt.title("true mask")
 
 
-def plot_color_transfer_results(trainImages, style_indices, grid_size=(5, 5)):
+def plot_color_transfer_results(
+        trainImages, 
+        style_indices, 
+        grid_size=(5, 5),
+        fig_size=(10, 6)):
     """
     plots the results from our color transfer code.
     """
@@ -53,6 +56,8 @@ def plot_color_transfer_results(trainImages, style_indices, grid_size=(5, 5)):
     transformed_images = cm.fit_transform(style_images, content_images)
 
     expanded_grid_size = (grid_size[0], grid_size[1] * 2)
+
+    plt.figure(figsize=fig_size)
 
     gs = GridSpec(*expanded_grid_size)
     
