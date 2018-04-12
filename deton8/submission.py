@@ -11,18 +11,13 @@ from skimage.transform import resize
 from sklearn.base import BaseEstimator
 
 def rle_encode(mask):
-    pixels = mask.T.flatten()
+    pixels = mask.flatten(order = 'F')
     # We need to allow for cases where there is a '1' at either end of the sequence.
-    # We do this by padding with a zero at each end when needed.
-    use_padding = False
-    if pixels[0] or pixels[-1]:
-        use_padding = True
-        pixel_padded = np.zeros([len(pixels) + 2], dtype=pixels.dtype)
-        pixel_padded[1:-1] = pixels
-        pixels = pixel_padded
-    rle = np.where(pixels[1:] != pixels[:-1])[0] + 2
-    if use_padding:
-        rle = rle - 1
+    # We do this by padding with a zero at each end.
+    pixel_padded = np.zeros([len(pixels) + 2], dtype=pixels.dtype)
+    pixel_padded[1:-1] = pixels
+    pixels = pixel_padded
+    rle = np.where(pixels[1:] != pixels[:-1])[0] + 1
     rle[1::2] = rle[1::2] - rle[:-1:2]
     return rle
 
@@ -31,7 +26,7 @@ def rle_to_string(runs):
     return ' '.join(str(x) for x in runs)
 
 
-def encode_mask(mask):
+def encode_mask(mask, return_string=True):
     """
     Performs the run length encoding for a given mask.  The mask is expected
     to be a single entry of the input to RLEncoder.fit.
@@ -42,7 +37,8 @@ def encode_mask(mask):
              mask.
     """
     nuclei_masks = [(mask == ind).astype(mask.dtype) for ind in range(1, int(mask.max() + 1))]
-    return [rle_to_string(rle_encode(mask)) for mask in nuclei_masks]
+    func = (lambda run: rle_to_string(run)) if return_string else (lambda run: run)
+    return [func(rle_encode(mask)) for mask in nuclei_masks]
 
 
 class RLEncoder(BaseEstimator):
