@@ -14,5 +14,3 @@ def pipeline(directory):
     x_predictions = (unet.predict(x_preprocessed) > 0).astype("uint8")
     x_postprocessed = np.array([postprocess(im, min_area = 15) for im in x_predictions])
     return x_postprocessed, metadata
-
-
