@@ -60,7 +60,7 @@ def plot_color_transfer_results(
     plt.figure(figsize=fig_size)
 
     gs = GridSpec(*expanded_grid_size)
-    
+
     left_ims = content_images.reshape((*grid_size, *content_images.shape[1:]))
     right_ims = transformed_images.reshape((*grid_size, *transformed_images.shape[1:]))
 
