@@ -1,0 +1,107 @@
+\documentclass[paper=letter, fontsize=12pt]{article}
+
+\usepackage[english]{babel} % English language/hyphenation
+\usepackage{amsmath,amsfonts,amsthm} % Math packages
+\usepackage[section]{placeins}  % prevent figures / eqns / tables 
+                                % from slipping out of section.
+\usepackage{sectsty} % Allows customizing section commands
+\allsectionsfont{\centering \normalfont\scshape} % Make all sections centered, 
+                                                 % the default font and small 
+                                                 % caps 
+
+\usepackage{fancyhdr} % Custom headers and footers
+
+% algorithms
+\usepackage{algorithm}
+\usepackage[compatible]{algpseudocode}
+
+\usepackage{ragged2e} % Text alignment
+\usepackage[margin=1in]{geometry} % 1 inch margins
+\usepackage{tikz} % Not always necessary, but allows very customizable 
+                  % figures / object placement
+\usepackage{enumitem} % get more out of enumerate
+
+% begin additional packages
+\usepackage{hyperref}
+\usepackage{blindtext}
+% end additional packages
+
+% Header and Footers
+\pagestyle{fancyplain} % Makes all pages in the document conform to the custom 
+                       % headers and footers
+\fancyhead{} % No page header
+\fancyfoot[L]{} % Empty left footer
+\fancyfoot[C]{} % Empty center footer
+\fancyfoot[R]{\thepage} % Page numbering for right footer
+\renewcommand{\headrulewidth}{0pt} % Remove header underlines
+\renewcommand{\footrulewidth}{0pt} % Remove footer underlines
+\setlength{\headheight}{13.6pt} % Customize the height of the header
+
+% Number all figs, eqns, and tables within the section
+\numberwithin{equation}{section} % Number equations within sections 
+\numberwithin{figure}{section} % Number figures within sections 
+\numberwithin{table}{section} % Number tables within sections 
+
+\setlength\parindent{4pt} % 4pt indentation for paragraphs
+\setlength{\parskip}{\baselineskip} % adds some spacing in between paragraphs
+
+\newcommand{\horrule}[1]{\rule{\linewidth}{#1}} % Create horizontal rule command
+                                                % with 1 argument of height
+\newcommand{\fancyline}{\\ \horrule{0.5pt} \vspace{0.1cm}} % fancy line to put
+                                                           % under questions
+
+%  Some commands for algorithm environments                                            
+\renewcommand{\algorithmicrequire}{\textbf{Input:}}
+\renewcommand{\algorithmicensure}{\textbf{Output:}}
+\renewcommand{\algorithmicforall}{\textbf{for each}}
+\newcommand{\algorithmiccontinue}{\textbf{continue}}
+\algloopdefx{RETURN}[1][]{\textbf{return} #1}
+
+% useful math shortcuts
+\newcommand{\lagr}[1]{\mathcal{L}\left( #1 \right)}
+\newcommand{\expval}[1]{E\left[#1\right]}
+\newcommand{\var}[1]{\text{var}\left(#1\right)}
+\renewcommand{\det}[1]{\text{det}\left(#1\right)}
+\newcommand{\diag}[1]{\text{diag}\left[#1\right]}
+
+% begin additional definitions and commands
+
+% end additional definitions and commands
+
+%-------------------------------------------------------------------------------
+%	TITLE SECTION
+%-------------------------------------------------------------------------------
+
+\title{	
+\normalfont \normalsize 
+\textsc{RICE UNIVERSITY COMP540} \\ [25pt]
+\horrule{0.5pt} \\[0.4cm] % Thin top horizontal rule
+\huge deton8: Detector of Nuclei \\ % The assignment title
+\horrule{2pt} \\[0.5cm] % Thick bottom horizontal rule
+}
+
+\author{Will LeVine \& Gabriel Vacaliuc}
+
+\date{\normalsize\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+    \blindtext
+\end{abstract}
+
+\tableofcontents
+
+\newpage
+
+%-------------------------------------------------------------------------------
+%   CONTENT
+%-------------------------------------------------------------------------------
+
+\section{Introduction}
+
+\blindtext
+
+\end{document}
