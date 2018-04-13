@@ -194,18 +194,47 @@ especially challenging.
         segmentation has been dramatically advanced in recent years, MS-COCO,
         one of the most popular datasets for such a task contains more than
         330K images, with more than 200K of them
-        labeled\footnote{http://cocodataset.org}.  In contrast, our dataset
-        contains a mere 670 labeled images (along with many mislabelings)
+        labeled\footnote{\href{http://cocodataset.org}{MS-COCO Dataset
+        Website}}.  In contrast, our dataset contains a mere 670 labeled images
         coupled with a 67 image validation set, and a 3019 image test set.
 
     \item composition of dataset
 
         As seen in Figure \ref{fig:dsbowl18-grid}, there exist a variety of
-        image types.  More specifically, the dataset was constructed using 
+        image types.  More specifically, the dataset was constructed using a 
+        number of different microscope types.  In addition, some images contain
+        a rather dense assortment of nuclei while some include only a few 
+        sparsely distributed.
+
+    \item mislabelings
+
+        A significant portion of the training set has mislabeled masks.  That
+        is, the reported ``true'' mask incorrectly represents the ground truth
+        of the image.  Several attempts have been made by the community to
+        produce better
+        labels.\footnote{https://github.com/lopuhin/kaggle-dsbowl-2018-dataset-fixes}\footnote{https://github.com/ibmua/data-science-bowl-2018-train-set}
 
 \end{enumerate}
 
 \subsection{Metric}
+
+Common metrics for object and semantic segmentation include average precision
+(AP) at various intersection over union (IoU) thresholds, or mean average
+precision (mAP) which averages the AP for each semantic class.  This
+competition mostly uses AP, albeit with a somewhat modified precision
+definition, detailed below.
+\begin{equation}
+    cP(t) = \frac{TP(t)}{TP(t) + FP(t) + FN(t)}
+\end{equation}
+
+where $cP(t)$ indicates the competition precision at $\text{IoU}=t$.  A true
+positive at threshold $t$ is when we identify an object which has an IoU of at
+least $t$ with a true object, false positive when a predicted object doesn't
+have a corresponding true object, and a false negative if we fail to identify a
+true object.  The full competition score can then be computed as
+\begin{equation}
+    AP = \frac{1}{10}\sum_{t = 0}^{9} cP(0.5 + 0.05t)
+\end{equation}
 
 \section{Background}
 
