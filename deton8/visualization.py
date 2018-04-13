@@ -76,3 +76,31 @@ def plot_color_transfer_results(
 
     plt.suptitle("Left: Original Images, Right: Images after Color Transfer")
     plt.show()
+
+def plot_grid(images, title="Example images from the 2018 DS Bowl.", 
+        gridsize = (5,10)):
+    """
+    Plots a grid of images without axes.  images[i] should return the ith
+    image.
+    """
+
+    num_images = np.prod(gridsize)
+
+    if len(images) < num_images:
+        raise ValueError("Not enough images to plot.")
+
+    plot_images = images.reshape((*gridsize, *images.shape[1:]))
+
+    fig = plt.figure()
+
+    gs = GridSpec(*gridsize)
+
+    for i in range(gridsize[0]):
+        for j in range(gridsize[1]):
+            ax = plt.subplot(gs[i, j])
+            ax.imshow(plot_images[i, j])
+            ax.axis('off')
+
+    fig.suptitle(title)
+
+    return fig
