@@ -62,7 +62,8 @@ def postprocess(X, min_area=0):
     return binary_fill_holes(flattened_otsu_predictions.reshape((256, 256)))
 
 
-def preprocess_image(img, imsize = (256, 256), scale = True):
+def preprocess_image(
+        img, imsize = (256, 256), scale = True, invert_white_images=True):
     """
     Processes an image per our specifications.
     """
@@ -72,7 +73,9 @@ def preprocess_image(img, imsize = (256, 256), scale = True):
     img = resize(img, imsize, mode="constant", preserve_range=True)
     img /= IMG_MAX if scale else 1
 
-    img = (1 - img) if img.mean() > WHITE_THRESHOLD else img
+    img = ((1 - img) 
+            if invert_white_images and ( img.mean() > WHITE_THRESHOLD ) 
+            else img)
 
     return img
 

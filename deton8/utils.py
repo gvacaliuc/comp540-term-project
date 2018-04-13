@@ -71,8 +71,13 @@ def flatten_data(data, labels=None, skip=10):
 
 class DataReader(object):
 
-    def __init__(self, directory, train=True, imsize=(256, 256),
-                 num_channels=3, scale=True):
+    def __init__(self, 
+            directory, 
+            train=True, 
+            imsize=(256, 256),
+            num_channels=3, 
+            scale=True,
+            invert_white_images=True):
         """
         Class to read in our training and testing data, resize it, and store
         some metadata, including the image id and original size.  If we need to
@@ -87,6 +92,7 @@ class DataReader(object):
         self.imsize = imsize
         self.num_channels = num_channels
         self.scale = scale
+        self.invert_white_images = invert_white_images
         self.IMG_MAX = 255.0
 
         self.image_metadata = []
@@ -127,16 +133,20 @@ class DataReader(object):
 
         mask = np.zeros(self.imsize, dtype='uint8')
         for indiv_mask in ic:
-            mask = np.maximum(mask, self._process(indiv_mask))
+            mask = np.maximum(mask, self._process(indiv_mask, True))
 
         return mask
 
-    def _process(self, img):
+    def _process(self, img, mask=False):
         """
         Processes an image per our specifications.
         """
 
-        return preprocess_image(img, self.imsize, self.scale)
+        if mask:
+            return preprocess_image(img, self.imsize, False, False)
+
+        return preprocess_image(
+                img, self.imsize, self.scale, self.invert_white_images)
 
     def get_metadata(self):
         """
