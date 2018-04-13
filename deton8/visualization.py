@@ -24,7 +24,7 @@ def plot_prediction(model, features, mask):
 
 def plot_segmentation(features, pred, mask):
 
-    ccs, seg = watershed_cc(pred, original_image=features, nms_min_distance=7, watershed_line=True, return_mask=True)
+    seg = watershed_cc(pred, original=features, nms_min_distance=7, watershed_line=True, return_mask=True)
     plt.figure()
     plt.subplot(131)
     plt.imshow(features[:, :, :3])

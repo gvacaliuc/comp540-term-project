@@ -24,7 +24,7 @@ def watershed_cc(pred, original, nms_min_distance=5, watershed_line=True,
              as a full mask w/ unique integers indicating components if
              return_mask is True.
     """
-    im = np.multiply(np.expand_dims(postprocess(pred), axis=3), np.expand_dims(original[:, :, 1], axis=3))
+    im = np.multiply(postprocess(pred), original[:, :, 1])
     dt = ndimage.distance_transform_edt(im)
     peaks = feature.peak_local_max(
             dt,
