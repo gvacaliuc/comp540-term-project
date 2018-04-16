@@ -1,7 +1,6 @@
 from .computer_vision import ColorMatcher
 from .analytical import BasisTransformer
 from .models import MiniBatchRegressor
-from .utils import flatten_data
 from sklearn.linear_model import SGDRegressor, PassiveAggressiveRegressor
 import numpy as np
 
@@ -11,7 +10,8 @@ def preprocess(x_test):
     x_test_preprocessed = cm.fit_transform(style_image, x_test)
     transformer = BasisTransformer()
     x_test_transformed = transformer.fit_transform(x_test_preprocessed)
-    x_test_flat = flatten_data(x_test_transformed, None, skip=1)
+    x_test_flat = np.nan_to_num(x_test_transformed).reshape(
+            (-1, x_test_transformed.shape[-1]))
     weights = np.load('../weights/regressor_weights.npz')
     sgd_regressor = MiniBatchRegressor(
         regressor=SGDRegressor(penalty='elasticnet', l1_ratio=0.11, max_iter = 5, tol = None),
