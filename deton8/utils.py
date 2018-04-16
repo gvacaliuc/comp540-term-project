@@ -14,61 +14,6 @@ from .computer_vision import postprocess
 import matplotlib.pyplot as plt
 
 
-def load_data(TRAIN_PATH="../data/stage1_train/",
-              TEST_PATH="../data/stage1_test/"):
-    """
-    loads the training features, the training labels, and the test features
-
-    parameters
-    __________
-    none
-
-    return
-    __________
-    X_train : np.array
-        the features of the training set
-    Y_train : np.array
-        the labels of the training set
-    X_test : np.array
-        the features of the test set
-    """
-    # Set some parameters
-    IMG_WIDTH = 256
-    IMG_HEIGHT = 256
-    IMG_CHANNELS = 3
-
-    train_reader = DataReader(TRAIN_PATH, imsize=(IMG_HEIGHT, IMG_WIDTH),
-                              num_channels=IMG_CHANNELS, scale=True)
-    test_reader = DataReader(TEST_PATH, train=False,
-                             imsize=(IMG_HEIGHT, IMG_WIDTH),
-                             num_channels=IMG_CHANNELS, scale=True)
-
-    print("Getting and resizing train images and masks ... ")
-    X_train = train_reader.as_matrix()
-    Y_train = np.stack(train_reader.masks)
-
-    print("Getting and resizing test images ... ")
-    X_test = test_reader.as_matrix()
-
-    print("Done!")
-    return X_train, Y_train, X_test
-
-
-def flatten_data(data, labels=None, skip=10):
-    """
-    Flattens our image matrices and masks into training pairs.
-    """
-
-    num_features = data.shape[-1]
-
-    data = np.nan_to_num(data[::skip]).reshape((-1, num_features))
-
-    if labels is not None:
-        labels = labels[::skip].reshape((-1))
-        return data, labels
-
-    return data
-
 class DataReader(object):
 
     def __init__(self, 
@@ -182,6 +127,105 @@ class DataReader(object):
 
         matrix = self.as_matrix(*args, **kwargs)
         return (self.get_metadata(), matrix)
+
+
+class NucleiDataset(object):
+
+    def __init__(self, 
+            directory, 
+            train=True, 
+            imsize=(256, 256),
+            num_channels=3, 
+            scale=True,
+            invert_white_images=True):
+        """
+        Class to read in our training and testing data, resize it, and store
+        some metadata, including the image id and original size.  If we need to
+        change the preprocessing for the images, we can do so in the _process
+        method.
+        """
+
+        #   Sets all attributes.
+        args, _, _, values = inspect.getargvalues(inspect.currentframe())
+        values.pop("self")
+        for arg, val in values.items():
+            setattr(self, arg, val)
+
+        self.IMG_MAX = 255.0
+
+        data_pattern = os.path.join(directory, "**/images/*.png")
+
+        self.metadata_ = []
+        self.masks_ = []
+        self.metadata_columns = ["image_id", "orig_shape"]
+
+        self.data_ic_ = ImageCollection(data_pattern)
+
+    def _load_image(self, filename):
+        """
+        Function to read, resize, and process an image.
+        """
+
+        path = filename.split("/")
+        image_id = path[len(self.directory.split("/")) - 1]
+
+        img = imread(filename)[:, :, :self.num_channels]
+        orig_shape = img.shape[:2]
+        img = self._process(img)
+
+        mask = np.zeros(self.imsize)
+
+        #   Load training labels if we're loading a training dataset
+        if self.train:
+            masks = self._load_mask(image_id)
+
+        return (img, masks, image_id, orig_shape)
+
+    def _load_mask(self, image_id):
+        """
+        Function to load masks of specific image.
+        """
+
+        mask_pattern = os.path.join(self.directory, image_id, "masks/*.png")
+        ic = ImageCollection(mask_pattern)
+
+        mask = np.zeros(self.imsize, dtype='uint8')
+        for lbl, indiv_mask in enumerate(ic):
+            mask += ((1 + lbl) * self._process(indiv_mask, True).astype('uint8'))
+
+        return mask
+
+    def _process(self, img, mask=False):
+        """
+        Processes an image per our specifications.
+        """
+
+        if mask:
+            return preprocess_image(img, self.imsize, False, False)
+
+        return preprocess_image(
+                img, self.imsize, self.scale, self.invert_white_images)
+
+    def load(self, max_size=None):
+        """
+        Loads in data up to the desired maximum amount.
+        """
+
+        num_images = min(max_size, len(self.data_ic_.files))
+
+        metadata = []
+        self.masks_ = np.zeros((num_images, *self.imsize))
+        self.images_ = np.zeros((num_images, *self.imsize, self.num_channels))
+
+        for im_num, filename in enumerate(self.data_ic_.files[:num_images]):
+            img, mask, image_id, orig_shape = self._load_image(filename)
+            self.images_[im_num] = img
+            self.masks_[im_num] = mask
+            metadata.append((image_id, orig_shape))
+
+        self.metadata_ = pd.DataFrame(metadata, columns=self.metadata_columns)
+
+        return self
 
 
 def get_model_results_global_thresh(model, data, labels):
