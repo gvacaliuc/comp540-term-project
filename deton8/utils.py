@@ -169,7 +169,11 @@ class NucleiDataset(object):
         path = filename.split("/")
         image_id = path[len(self.directory.split("/")) - 1]
 
-        img = imread(filename)[:, :, :self.num_channels]
+        try:
+            img = imread(filename)[:, :, :self.num_channels]
+        except IndexError:
+            tmp = imread(filename)
+            img = np.stack([tmp]*3).transpose(1, 2, 0)
         orig_shape = img.shape[:2]
         img = self._process(img)
 
