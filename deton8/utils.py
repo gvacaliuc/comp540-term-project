@@ -173,7 +173,7 @@ class NucleiDataset(object):
         orig_shape = img.shape[:2]
         img = self._process(img)
 
-        mask = np.zeros(self.imsize)
+        masks = np.zeros(self.imsize)
 
         #   Load training labels if we're loading a training dataset
         if self.train:
