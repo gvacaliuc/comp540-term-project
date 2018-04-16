@@ -24,6 +24,13 @@
 % begin additional packages
 \usepackage{hyperref}
 \usepackage{blindtext}
+\usepackage[
+    backend=biber,
+    url=false, 
+    doi=true,
+    eprint=true
+]{biblatex}
+\addbibresource{./references.bib}
 % end additional packages
 
 % Header and Footers
@@ -236,15 +243,24 @@ true object.  The full competition score can then be computed as
 
 \subsection{Similar Work}
 
-\subsection{Effective Architecture: UNet}
-
 \section{Methods}
+
+Our pipeline consists of a few distinct steps.  We begin with aggressive
+preprocessing, intended to collapse the data modalities into one.  The
+processed outputs are concatenated with a set of hand-designed features
+resulting in mult-channel images.  We flatten our images into $d$ dimensional
+pixels, where $d$ is the number of channels in the original image, and fit two
+regression models using Stochastic Gradient Descent.  We use the binary mask
+labels as the regression response variable.  Using the regression outputs
+stacked with our multichannel images, we train a specific deep neural network
+known as a Mask R-CNN to predict output masks for each individual nucleus in an
+image.
 
 \subsection{Preprocessing \& Color Transfer}
 
-Acknowledging that the data is composed of several modalities, we decided that
-the first course of action was to effectively preprocess our images into a
-single unimodal distribution.  Our approach can be broken into 3 steps:
+Acknowledging that the data is composed of several modalities, our first step
+is to effectively preprocess our images into a single unimodal distribution.
+Our approach can be broken into 3 steps:
 \begin{enumerate}
     \item reshape \& rescale pixel values to $[0, 1]$
     \item invert images with a white background and dark nuclei
@@ -305,13 +321,16 @@ backgrounds (near 0 pixel values) and nuclei ranging from light gray to white.
 \subsection{Hand Designed Features \& Initial Linear Regressive Model}
 
 At this point, we've created a high-contrast grayscale representation of each
-image.
+image. THIS IS A DUMMY CITATION PLZ REMOVE AFTER WE INCLUDE MORE.
+\cite{DUMMY:1}
 
 \subsection{Regressive UNet}
 
 \subsection{Locally Thresholded Binarization}
 
 \subsection{Semantic Segmentation using Watershed}
+
+\subsection{Semantic Segmentation using Mask R-CNN}
 
 \section{Results}
 
@@ -322,5 +341,9 @@ image.
 \section{Discussion}
 
 \section{Conclusion}
+
+\section{References}
+
+\printbibliography
 
 \end{document}
