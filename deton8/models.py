@@ -61,7 +61,7 @@ class MiniBatchRegressor(BaseEstimator, RegressorMixin):
 
         return self
 
-    def predict(self, data):
+    def predict(self, images):
         """
         Predicts the output of our model on the provided data.
 
@@ -70,4 +70,6 @@ class MiniBatchRegressor(BaseEstimator, RegressorMixin):
 
         num_features = images.shape[-1]
         data = images.reshape((-1, num_features))
-        return self.predict(data).reshape(images.shape[:-1])
+        output_shape = (images.shape[:3]
+                        if len(images.shape) == 4 else images.shape[:2])
+        return self.regr_.predict(data).reshape((*output_shape))
