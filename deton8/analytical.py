@@ -105,7 +105,7 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
         :return: the image features
         """
 
-        num_features = 8
+        num_features = 6
         IMG_MAX = 255.0
 
         image = image[:, :, 0]
