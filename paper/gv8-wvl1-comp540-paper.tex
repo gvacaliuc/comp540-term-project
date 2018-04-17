@@ -3,12 +3,12 @@
 
 \usepackage[english]{babel} % English language/hyphenation
 \usepackage{amsmath,amsfonts,amsthm} % Math packages
-%\usepackage[section]{placeins}  % prevent figures / eqns / tables 
+%\usepackage[section]{placeins}  % prevent figures / eqns / tables
                                 % from slipping out of section.
 \usepackage{sectsty} % Allows customizing section commands
-\allsectionsfont{\normalfont\scshape} % Make all sections centered, 
-                                                 % the default font and small 
-                                                 % caps 
+\allsectionsfont{\normalfont\scshape} % Make all sections centered,
+                                                 % the default font and small
+                                                 % caps
 
 \usepackage{fancyhdr} % Custom headers and footers
 
@@ -18,7 +18,7 @@
 
 \usepackage{ragged2e} % Text alignment
 \usepackage[margin=1in]{geometry} % 1 inch margins
-\usepackage{tikz} % Not always necessary, but allows very customizable 
+\usepackage{tikz} % Not always necessary, but allows very customizable
                   % figures / object placement
 \usepackage{enumitem} % get more out of enumerate
 
@@ -28,7 +28,7 @@
 \usepackage{blindtext}
 \usepackage[
     backend=biber,
-    url=false, 
+    url=false,
     doi=true,
     eprint=true
 ]{biblatex}
@@ -65,7 +65,7 @@
 % end additional packages
 
 % Header and Footers
-\pagestyle{fancyplain} % Makes all pages in the document conform to the custom 
+\pagestyle{fancyplain} % Makes all pages in the document conform to the custom
                        % headers and footers
 \fancyhead{} % No page header
 \fancyfoot[L]{} % Empty left footer
@@ -76,9 +76,9 @@
 \setlength{\headheight}{13.6pt} % Customize the height of the header
 
 % Number all figs, eqns, and tables within the section
-\numberwithin{equation}{section} % Number equations within sections 
-\numberwithin{figure}{section} % Number figures within sections 
-\numberwithin{table}{section} % Number tables within sections 
+\numberwithin{equation}{section} % Number equations within sections
+\numberwithin{figure}{section} % Number figures within sections
+\numberwithin{table}{section} % Number tables within sections
 
 \setlength\parindent{4pt} % 4pt indentation for paragraphs
 \setlength{\parskip}{\baselineskip} % adds some spacing in between paragraphs
@@ -88,7 +88,7 @@
 \newcommand{\fancyline}{\\ \horrule{0.5pt} \vspace{0.1cm}} % fancy line to put
                                                            % under questions
 
-%  Some commands for algorithm environments                                            
+%  Some commands for algorithm environments
 \renewcommand{\algorithmicrequire}{\textbf{Input:}}
 \renewcommand{\algorithmicensure}{\textbf{Output:}}
 \renewcommand{\algorithmicforall}{\textbf{for each}}
@@ -112,8 +112,8 @@
 %	TITLE SECTION
 %-------------------------------------------------------------------------------
 
-\title{	
-\normalfont \normalsize 
+\title{
+\normalfont \normalsize
 \textsc{RICE UNIVERSITY COMP540} \\ [25pt]
 \horrule{0.5pt} \\[0.4cm] % Thin top horizontal rule
 \huge deton8: Detector of Nuclei \\ % The assignment title
@@ -198,9 +198,9 @@ description in Appendix Section \ref{app:competition-description}.
     \end{quote}
 \end{appendixatend}
 
-To begin understanding the task at hand, we're going to dive in and check out 
+To begin understanding the task at hand, we're going to dive in and check out
 some images from the dataset.  We'll continue by explaining exactly what needs
-to be done for a given image, followed by some commentary on the specific 
+to be done for a given image, followed by some commentary on the specific
 challenges of this competition.
 
 \subsection{Dataset Examples}
@@ -233,7 +233,7 @@ segmentation.  We wish to uniquely identify each nucleus in an image.
 
 \subsection{Challenges}
 
-While semantic segmentation is itself a very challenging task given any 
+While semantic segmentation is itself a very challenging task given any
 dataset, there are some key aspects of this competition which make our task
 especially challenging.
 \begin{enumerate}
@@ -249,9 +249,9 @@ especially challenging.
     \item composition of dataset
 
         As seen in Figure \ref{fig:dsbowl18-grid}, there exist a variety of
-        image types.  More specifically, the dataset was constructed using a 
+        image types.  More specifically, the dataset was constructed using a
         number of different microscope types.  In addition, some images contain
-        a rather dense assortment of nuclei while some include only a few 
+        a rather dense assortment of nuclei while some include only a few
         sparsely distributed.
     \item mislabelings
 
@@ -370,7 +370,7 @@ whitening the data, in which we uncorrelate the features.  As seen in Figure
 correlated.  Since we'd prefer our images (at least in this initial first pixel
 classification model) to be greyscale, with as much variance as possible, this
 problem becomes incredibly tractable.  Our task reduces to decorrelating the
-images channels (recovering our latent space), and taking the channel 
+images channels (recovering our latent space), and taking the channel
 corresponding to the highest variance.  This is accomplished using PCA
 whitening.
 
@@ -385,8 +385,45 @@ whitening.
 
 \subsection{Hand Designed Features}
 
-At this point, we've created a high-contrast grayscale representation of each
-image.
+After whitening the data, we mapped our data into a feature-space with goals of
+extracting as much information as possible and creating as much contrast between
+foreground and background as possible.
+
+We came accross these features by extracting over 10 features that could encode
+further information, fitting the regressors, and then checking the regressors'
+weight vectors to see if each feature was important. After performing this
+process several times, we ended up with 5 features. Below, we describe the
+information each feature encodes and the intuition behind including that information:
+
+\begin{enumerate}
+  \item Raw RGB Values:
+  We first decided the include the RGB values themselves. Several other
+  existing pipelines relied solely on the RGB values and performed quite well,
+  meaning the RGB values must encode valuable information, so we included it.
+  \item  Bilateral Filter:
+  A Bilateral Filter convolves the image with a weighted Gaussian kernal. This
+  denoises the image, while still preserving the edges. We included it to
+  get rid of background salt and pepper.
+  \item 50/99 Image Rescaling:
+  Image Rescaling widens the data distribution and increases contrast. We grabbed
+  the 50th percentile and rescaled everything below and including that value to
+  be 0, and we grabbed the 99th percentile and rescaled everything above that
+  value to be 1. We included this to increase contrast between foreground and background,
+  and to filter out salt and pepper.
+  \item Adaptive Histogram Equalization:
+  Adaptive Histogram equalization increases contrast locally. We included this
+  so that the regressors could recognize smaller nuclei among salt and papper.
+  \item Dilation:
+  A dilation performs a uniform kernel convolution accross the image, thus
+  setting each pixel to be the average of its neighbors and itself. This increases
+  the area of each nucleus. We included this so that the regressors could pick
+  out small nuclei.
+
+\end{enumerate}
+After extracting these feature, we perform standard feature normalization on
+each feature.
+
+
 
 \subsection{Linear Model for Individual Pixel Probabilities}
 
@@ -395,7 +432,7 @@ This stage of our pipeline is tasked with taking an input vector $x \in
 Mathematically, we wish to learn a function $f: \mathbb{R}^d \mapsto [0, 1]$
 which minimizes the binary cross-entropy loss
 \begin{equation}
-    \mathcal{L}(\mathcal{D}) = 
+    \mathcal{L}(\mathcal{D}) =
         - \sum_{x \in \mathcal{D}} yf(x) + (1 - y)(1 - f(x))
 \end{equation}
 
@@ -404,9 +441,9 @@ largest factor of consideration for us is computational tractability.  While
 our training dataset is rather small in terms of individual
 images\footnote{Dataset Sizes: Training (670), Validation (65), Testing
 (3036)}, after decomposing these sets into pixels our dataset becomes quite
-large.  In our implementation we resized all images to $256 \times 256$, which 
-results in a 65536x increase in the number of training examples.  One 
-trick to reduce this, due to the sparsity of many training examples and the 
+large.  In our implementation we resized all images to $256 \times 256$, which
+results in a 65536x increase in the number of training examples.  One
+trick to reduce this, due to the sparsity of many training examples and the
 over-abundance of negative examples, is to simply filter out some of the number
 of negative examples.  In practice, training on the entire dataset limits us to
 algorithms using some form of stochastic gradient descent (SGD), as it's
@@ -432,8 +469,8 @@ to approximate the Ordinary Least Squares (OLS) solution to the system of
 equations.  Regularization is induced by an elastic net with a mixing
 coefficient to combine $\ell_1$ and $\ell_2$ regularization.
 \begin{equation*}
-    \hat{\theta} = \argmin_\theta 
-        \left\{ \sum_{x \in \mathcal{D}} (y - \langle \theta, x \rangle)^2 
+    \hat{\theta} = \argmin_\theta
+        \left\{ \sum_{x \in \mathcal{D}} (y - \langle \theta, x \rangle)^2
                 + \alpha\left(
                     \gamma\abs{\theta}_1 + (1 - \gamma)\abs{\theta}^2_2
                   \right)
@@ -470,8 +507,8 @@ such that $\ell(w; (x_t, y_t)) \le \xi$ and $\xi \ge 0$.
 
 \subsection{UNet as a Learned Binarizer}
 
-Taking our predictions from our linear models, we complete our pipeline
-using a DNN functioning as a leared binarizer.
+Taking our predictions from our linear models and our 5 features, we complete
+our pipeline using a DNN functioning as a leared binarizer.
 
 \subsection{Semantic Segmentation using Watershed}
 
