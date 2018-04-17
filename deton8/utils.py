@@ -232,6 +232,30 @@ class NucleiDataset(object):
         return self
 
 
+def flatten_data(X):
+    """
+    Flattens the data in X.
+
+    :param X: ndarray of shape (N, X, Y, C)
+
+    :return reshaped: ndarray of shape (N * X * Y, C)
+    """
+
+    return X.reshape((-1, X.shape[-1]))
+
+
+def expand_data(X, orig_shape=(256, 256)):
+    """
+    Restructures the data in X as a set of images.
+
+    :param X: ndarray of shape (N * X * Y, C)
+
+    :return reshaped: ndarray of shape (N, X, Y, C)
+    """
+
+    return X.reshape((-1, *orig_shape, X.shape[-1]))
+
+
 def get_model_results_global_thresh(model, data, labels):
     """
     Data and Labels should be the flattened data / labels.
