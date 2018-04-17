@@ -46,7 +46,7 @@ class MiniBatchRegressor(BaseEstimator, RegressorMixin):
         """
 
         x_flat = flatten_data(data)
-        y_flat = flatten_data(labels)
+        y_flat = labels.reshape((x_flat.shape[0],))
 
         self.regr_ = self.regressor
 
