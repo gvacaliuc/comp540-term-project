@@ -10,6 +10,7 @@ import numpy as np
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.linear_model import SGDRegressor
 
+from .utils import flatten_data
 
 class MiniBatchRegressor(BaseEstimator, RegressorMixin):
     """
@@ -37,35 +38,34 @@ class MiniBatchRegressor(BaseEstimator, RegressorMixin):
 
     def fit(self, data, labels):
         """
-        Trains our regressor for the number of iterations provided
-        as well as
+        Given a set of input images and masks, fits the regressor for the
+        number of iterations provided.
+
+        :param data: ndarray of shape (N, X, Y, C)
+        :param labels: ndarray of shape (N, X, Y)
         """
+
+        x_flat = flatten_data(data)
+        y_flat = flatten_data(labels)
 
         self.regr_ = self.regressor
 
-        arange = np.arange(data.shape[0])
+        arange = np.arange(x_flat.shape[0])
 
         for itr in self.tqdm(range(self.num_iters)):
             batch_idx = np.random.choice(arange, size=self.batch_size)
             if self.verbose:
                 print("Iteration {}/{}".format(itr, self.num_iters))
 
-            self.regressor.partial_fit(data[batch_idx], labels[batch_idx])
+            self.regressor.partial_fit(x_flat[batch_idx], y_flat[batch_idx])
+
+        return self
 
     def predict(self, data):
         """
         Predicts the output of our model on the provided data.
-        """
 
-        return self.regressor.predict(data)
-
-    def predict_images(self, images):
-        """
-        Predicts the output of our model for a set of provided images.  Note
-        that the number of channels should be the number of features this
-        model was trained with.
-
-        :param images: ndarray of shape N x X x Y x C
+        :param data: ndarray of shape (N, X, Y, C)
         """
 
         num_features = images.shape[-1]
