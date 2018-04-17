@@ -182,7 +182,9 @@ class ColorMatcher(BaseEstimator, TransformerMixin):
         matrix and mode specified previously.
         """
 
-        return np.stack([self._compute_projection(im) for im in content_images])
+        return np.mean(
+            np.stack([self._compute_projection(im) for im in content_images]),
+            axis=3)
 
     def fit_transform(self, style_images, content_images):
         """
