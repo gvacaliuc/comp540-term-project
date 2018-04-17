@@ -51,12 +51,12 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
 
         self.set_params(**values)
 
-    def fit(self, images):
+    def fit(self, images, y=None):
         """
         Takes an ndarray of images and increases the number of channels by
         performing our basis map to each image.
 
-        :param images: an array of shape N x X x Y x C
+        :param images: an array of shape N x X x Y x 1
 
         :return self: the fitted estimator
         """
@@ -69,12 +69,24 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
 
         return self
 
-    def fit_transform(self, images):
+    def transform(self, images, y=None):
         """
         Takes an ndarray of images and increases the number of channels by
         performing our basis map to each image.
 
-        :param images: an array of shape N x X x Y x C
+        :param images: an array of shape N x X x Y x 1
+
+        :return self.features_: the transformed data
+        """
+
+        return self.features_
+
+    def fit_transform(self, images, y=None):
+        """
+        Takes an ndarray of images and increases the number of channels by
+        performing our basis map to each image.
+
+        :param images: an array of shape N x X x Y x 1
 
         :return self.features_: the transformed data
         """
@@ -83,9 +95,10 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
 
     def _basis_map(self, image):
         """
-        Maps each pixel of an image to a set of features.
+        Maps each pixel of an image to a set of features.  Input image should
+        be grayscale.
 
-        :param image: the input image (height x width x channels)
+        :param image: the input image (height x width x 1)
 
         The rest of the parameters are documented in BasisTransformer.
 
@@ -94,43 +107,45 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
 
         num_features = 8
         IMG_MAX = 255.0
+
+        image = image[:, :, 0]
+        uint8_image = (image * IMG_MAX).astype('uint8')
+
         new_image = np.zeros((*image.shape[:2], num_features))
 
         mean = np.mean(image)
         std = np.std(image)
 
         bilateral = cv2.bilateralFilter(
-                np.mean(image * IMG_MAX, axis=2).astype("uint8"),
+                uint8_image,
                 self.bilateral_d,
                 self.bilateral_sigma_color,
                 self.bilateral_sigma_space) / IMG_MAX
         p2, p98 = np.percentile(image, (50, 99))
-        img_rescale = np.mean(
-                exposure.rescale_intensity(image, in_range=(p2, p98)),
-                axis=2)
+        img_rescale = exposure.rescale_intensity(image, in_range=(p2, p98))
 
         # TODO: This raisies a warning about precision loss, but idk why.
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
-            equalize_hist = exposure.equalize_adapthist(np.mean(image * IMG_MAX, axis=2).astype("uint8"),
-                                                        clip_limit=self.equalize_hist_clip_limit)
+            equalize_hist = exposure.equalize_adapthist(
+                    image,
+                    clip_limit=self.equalize_hist_clip_limit)
 
-        dilate = np.mean(cv2.dilate(image,
-                                    self.dialation_kernel,
-                                    iterations=self.dialation_iters),
-                         axis=2)
+        dilate = cv2.dilate(image,
+                            self.dialation_kernel,
+                            iterations=self.dialation_iters)
 
-        # First 3 dimensions are original color space.
-        new_image[:, :, :3] = image
-        # 4th dimension is the pixels z-score.
-        new_image[:, :, 3] = (np.mean(image, axis = 2) - mean) / std
-        # 5th dimension is the result of a bilateral filtering
-        new_image[:, :, 4] = bilateral
-        # 6th dimension is the rescaled image
-        new_image[:, :, 5] = img_rescale
-        # 7th dimension is the result of a adaptive histogram
-        new_image[:, :, 6] = equalize_hist
-        # 8th dimension is a dialation
-        new_image[:, :, 7] = dilate
+        # First dimension are original color space.
+        new_image[:, :, 0] = image
+        # 2nd dimension is the pixels z-score.
+        new_image[:, :, 1] = (image - mean) / std
+        # 3rd dimension is the result of a bilateral filtering
+        new_image[:, :, 2] = bilateral
+        # 4th dimension is the rescaled image
+        new_image[:, :, 3] = img_rescale
+        # 5th dimension is the result of a adaptive histogram
+        new_image[:, :, 4] = equalize_hist
+        # 6th dimension is a dialation
+        new_image[:, :, 5] = dilate
 
         return np.nan_to_num(new_image)
