@@ -372,12 +372,48 @@ backgrounds (near 0 pixel values) and nuclei ranging from light gray to white.
 \subsection{Hand Designed Features}
 
 At this point, we've created a high-contrast grayscale representation of each
-image. THIS IS A DUMMY CITATION PLZ REMOVE AFTER WE INCLUDE MORE.
-\cite{DUMMY:1}
+image.
 
 \subsection{Linear Model for Individual Pixel Probabilities}
 
+This stage of our pipeline is tasked with taking an input vector $x \in
+\mathbb{R}^d$ and assigning to it a probability of belonging to a nucleus.
+Mathematically, we wish to learn a function $f: \mathbb{R}^d \mapsto [0, 1]$
+which minimizes the binary cross-entropy loss
+\begin{equation}
+    \mathcal{L}(\mathcal{D}) = 
+        - \sum_{x \in \mathcal{D}} yf(x) + (1 - y)(1 - f(x))
+\end{equation}
 
+While we discussed several techniques for performing soft-classification, the
+largest factor of consideration for us is computational tractability.  While
+our training dataset is rather small in terms of individual
+images\footnote{Dataset Sizes: Training (670), Validation (65), Testing
+(3036)}, after decomposing these sets into pixels our dataset becomes quite
+large.  In our implementation we resized all images to $256 \times 256$, which 
+results in a 65536x increase in the number of training examples.  One 
+trick to reduce this, due to the sparsity of many training examples and the 
+over-abundance of negative examples, is to simply filter out some of the number
+of negative examples.  In practice, training on the entire dataset limits us to
+algorithms using some form of stochastic gradient descent (SGD), as it's
+infeasible to perform matrix operations to calculate an exact least squares
+solution on the full dataset.
+
+We use two regression models in our model pipeline, both implemented in
+Scikit-Learn\cite{scikit-learn}: the \texttt{SGDRegressor} and the
+\texttt{PassiveAggressiveRegressor}\cite{paregression}.  These models were
+chosen as they are fast, tested, and available implementations for linear
+regression.  In practice, the two models focused on different subsets of our
+features mentioned above, and their learned outputs have considerable variance.
+We chose to include both as it improved our individual pixel classification
+precision and recall.
+
+We'll continue by explaining in detail the mathematical problems each of these
+implementations solve.
+
+\subsubsection{\texttt{SGDRegressor}}
+
+\subsubsection{\texttt{PassiveAggressiveRegressor}}
 
 \subsection{UNet as a Learned Binarizer}
 
@@ -399,9 +435,11 @@ image. THIS IS A DUMMY CITATION PLZ REMOVE AFTER WE INCLUDE MORE.
 
 \section{Conclusion}
 
-\section{References}
+\newpage
 
 \printbibliography
+
+\newpage
 
 \includeappendices
 
