@@ -32,7 +32,7 @@ def LinearPipeline(memory=mkdtemp()):
         [("flattener", FunctionTransformer(flatten_data, validate=False)),
          ("whitener", 
           PCA(n_components=1, svd_solver='randomized', whiten=True)),
-         ("minmaxscaler", MinMaxScaler(copy=False)),
+         ("minmaxscaler", MinMaxScaler()),
          ("expander", FunctionTransformer(expand_data, validate=False)),
          ("basis_transformer", BasisTransformer()),
          ("regressor", MiniBatchRegressor(batch_size=1000, num_iters=1000))],
