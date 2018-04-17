@@ -99,11 +99,13 @@
 \newcommand{\lagr}[1]{\mathcal{L}\left( #1 \right)}
 \newcommand{\expval}[1]{E\left[#1\right]}
 \newcommand{\var}[1]{\text{var}\left(#1\right)}
+\newcommand{\abs}[1]{\left|#1\right|}
 \renewcommand{\det}[1]{\text{det}\left(#1\right)}
 \newcommand{\diag}[1]{\text{diag}\left[#1\right]}
 
 % begin additional definitions and commands
-
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
 % end additional definitions and commands
 
 %-------------------------------------------------------------------------------
@@ -307,7 +309,7 @@ With our predicted binary mask, we proceed with the segmentation problem.  This
 is accomplished using a Watershed Segmentation, with specific care to perform
 non-maximum supression on the proposed markers so as to limit oversegmentation.
 
-\subsection{Preprocessing \& Color Transfer}
+\subsection{Preprocessing \& Data Whitening}
 
 Acknowledging that the data is composed of several modalities, our first step
 is to effectively preprocess our images into a single unimodal distribution.
@@ -315,7 +317,7 @@ Our approach can be broken into 3 steps:
 \begin{enumerate}
     \item reshape \& rescale pixel values to $[0, 1]$
     \item invert images with a white background and dark nuclei
-    \item transfer a desired color distribution onto all images
+    \item transfer a desired color distribution onto all images by whitening
 \end{enumerate}
 
 The first step, reshaping and scaling is somewhat self-explanatory.  We require
@@ -344,30 +346,42 @@ nuclei style of several of the training images to some of the more difficult
 training images with lighter back grounds. Unfortunately, in practice this
 proved be to be far too resource demanding and time consuming.
 
-However, we don't need full style transfer for this task, simply color
-transfer! Note that the color of an image is simply defined as the ratio of the
-red green and blue color channels of an image. There exist well known methods
-of transfering the color of a given image or a set of images to the content of
-another image.  Typically, one computes the covariance matrix w.r.t. channels
-of the image.  From here, several methods can ensue, but all depend on creating
-some sort of decomposition of the covariance matrix such as PCA.
+However, applying neural style transfer to this problem is a \textbf{sin of
+overengineering}. Note that the color of an image is simply defined as the
+ratio of the red green and blue color channels of an image.  We approach this
+problem as a problem of finding the right basis space with which to represent
+our data.  Assuming that our data naturally exists in a latent space with
+unknown basis vectors, we posit that we can return our data to this space
+through simple linear transformations, completely unsupervised.  Given a
+flattened $d$-channel image with $n$ pixels, $X_j \in \mathbb{R}^{n \times d}$,
+we propose that its content was colored according to the simple matrix
+equation
+\begin{equation}
+    X_j = S_j X^*_j
+\end{equation}
 
-Here's the idea: given a covariance matrix for an image, $A$, with the desired
-color content and a covariance matrix for an image, $B$, with the desired
-content, decompose both into invertible representations. Then, take the
-existing channel content, multiply it by the inverse of the decomposition of
-$B$, and finally multiply by it by the decomposition of $A$. Intuitively (and
-very hand-wavy), we're ``reversing'' the effect of the coloring processing on
-the image content and then applying our desired image color content to the
-image content.
+where $S_j$ is the coloring matrix, and $X^*_j$ is our original content in the
+latent space.  Of course, provided $S_j$ is an invertible matrix, we can
+succeed in full recovery of our data.  However, we must be careful to transform
+each image to the \textit{same} latent space.  Of course, we're not the first
+to do this.\cite{whiten-stanford}\cite{whiten-mit}  This practice is known as
+whitening the data, in which we uncorrelate the features.  As seen in Figure
+\ref{fig:correlated-features}, the channels in our raw images are highly
+correlated.  Since we'd prefer our images (at least in this initial first pixel
+classification model) to be greyscale, with as much variance as possible, this
+problem becomes incredibly tractable.  Our task reduces to decorrelating the
+images channels (recovering our latent space), and taking the channel 
+corresponding to the highest variance.  This is accomplished using PCA
+whitening.
 
-Our ideal image coloring is one where image backgrounds are black and nuclei
-are white.  As such, we choose a selection of high contrast images with dark,
-black backgrounds and bright, white nuclei to use as our training style images.
-These images are currently hand picked from the training set upon inspection,
-as we only need a few images for our approach to work well.  The output for
-each image is an (effectively) grayscale representation with rich black
-backgrounds (near 0 pixel values) and nuclei ranging from light gray to white.
+\begin{figure}
+    \centering
+    \includegraphics[width=0.75\textwidth]{./figs/correlated-features.png}
+    \caption{A scatter plot of a subset of pixels from our training data.
+    Notice how clear lines form, representing various modalities, all with
+    highly correlated features.}
+    \label{fig:correlated-features}
+\end{figure}
 
 \subsection{Hand Designed Features}
 
@@ -409,13 +423,55 @@ We chose to include both as it improved our individual pixel classification
 precision and recall.
 
 We'll continue by explaining in detail the mathematical problems each of these
-implementations solve.
+implementations solve as well as the hyperparameters involved.
 
 \subsubsection{\texttt{SGDRegressor}}
 
+This regressor solves linear regression using the standard squared loss, so as
+to approximate the Ordinary Least Squares (OLS) solution to the system of
+equations.  Regularization is induced by an elastic net with a mixing
+coefficient to combine $\ell_1$ and $\ell_2$ regularization.
+\begin{equation*}
+    \hat{\theta} = \argmin_\theta 
+        \left\{ \sum_{x \in \mathcal{D}} (y - \langle \theta, x \rangle)^2 
+                + \alpha\left(
+                    \gamma\abs{\theta}_1 + (1 - \gamma)\abs{\theta}^2_2
+                  \right)
+        \right\}
+\end{equation*}
+
+where $\gamma$ is our mixing coefficient, and $\alpha$ is our regularization
+term.
+
 \subsubsection{\texttt{PassiveAggressiveRegressor}}
 
+This regressor has roots in standard linear regression as well as Support
+Vector Machines (SVM).\cite{paregression}  It tackles standard binary classification
+as well as regression, however it's weight update is quite unique.  At step
+$t$, the new weight vector $w_{t+1}$ is defined as
+\begin{equation*}
+    w_{t+1} = \argmin_{w \in \mathbb{R}^n} \frac{1}{2}\abs{w - w_t}^2
+\end{equation*}
+
+such that $\ell(w; (x_t, y_t)) = 0$, where $\ell$ represents the hinge loss at
+step $t$.  Let's explore what happens for a given $w$.  Suppose that the hinge
+loss is already 0.  Then the algorithm is completely \textit{passive}, as it
+simply chooses $w_{t+1} = w$.  Else, we \textit{aggressively} force $w_t$
+to satisfy $\ell_t$ by projecting in onto the space of vectors such that
+$\ell_t = 0$.
+
+In practice, much like fitting an SVM, we introduce a slack variable to control
+the \textit{aggressiveness} of the regressor, as seen below.
+\begin{equation*}
+    w_{t+1} = \argmin_{w \in \mathbb{R}^n} \frac{1}{2}\abs{w - w_t}^2 + C\xi
+\end{equation*}
+
+such that $\ell(w; (x_t, y_t)) \le \xi$ and $\xi \ge 0$.
+
 \subsection{UNet as a Learned Binarizer}
+
+Taking our predictions from our linear models, we complete our pipeline
+using a DNN functioning as a leared binarizer.
 
 \subsection{Semantic Segmentation using Watershed}
 
