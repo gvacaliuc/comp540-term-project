@@ -215,6 +215,7 @@ class NucleiDataset(object):
         Loads in data up to the desired maximum amount.
         """
 
+        max_size = max_size if max_size else np.inf
         num_images = min(max_size, len(self.data_ic_.files))
 
         metadata = []
