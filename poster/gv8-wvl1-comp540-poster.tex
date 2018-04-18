@@ -1,14 +1,14 @@
 % Written by Daina Chiba (daina.chiba@gmail.com).
 % It was mostly copied from two poster style files:
 % beamerthemeI6pd2.sty written by
-%	 	Philippe Dreuw <dreuw@cs.rwth-aachen.de> and 
+%	 	Philippe Dreuw <dreuw@cs.rwth-aachen.de> and
 % 		Thomas Deselaers <deselaers@cs.rwth-aachen.de>
 % and beamerthemeconfposter.sty written by
 %     Nathaniel Johnston (nathaniel@nathanieljohnston.com)
 %		http://www.nathanieljohnston.com/2009/08/latex-poster-template/
-% ---------------------------------------------------------------------------------------------------% 
+% ---------------------------------------------------------------------------------------------------%
 % Preamble
-% ---------------------------------------------------------------------------------------------------% 
+% ---------------------------------------------------------------------------------------------------%
 \documentclass[final]{beamer}
 \usepackage[orientation=landscape,size=custom,width=110,height=86,scale=1.2,debug]{beamerposter}
 \mode<presentation>{\usetheme{RicePoster}}
@@ -26,7 +26,7 @@
 %   End Additional Packages
 
 
-% comment 
+% comment
 \newcommand{\comment}[1]{}
 
 \newlength{\columnheight}
@@ -40,20 +40,20 @@
 \setlength{\twocolwid}{0.4\paperwidth}
 \setlength{\threecolwid}{0.19\paperwidth}
 
-% ---------------------------------------------------------------------------------------------------% 
+% ---------------------------------------------------------------------------------------------------%
 % Title, author, date, etc.
-% ---------------------------------------------------------------------------------------------------% 
+% ---------------------------------------------------------------------------------------------------%
 \title{\huge deton8: Detector of Nuclei}
 \author{Will LeVine \& Gabriel Vacaliuc}
 \institute[Rice University]{Department of Computer Science, Rice University}
 \date[Apr.2018]{April, 2018}
-\def\conference{COMP540 Term Project: 2018 Data Science Bowl} 
+\def\conference{COMP540 Term Project: 2018 Data Science Bowl}
 \def\yourEmail{wvl1@rice.edu,gv8@rice.edu}
 
 
-% ---------------------------------------------------------------------------------------------------% 
+% ---------------------------------------------------------------------------------------------------%
 % Contents
-% ---------------------------------------------------------------------------------------------------% 
+% ---------------------------------------------------------------------------------------------------%
 \begin{document}
 \begin{frame}[t]
 
@@ -74,7 +74,15 @@
     \vskip3ex
 
     \begin{block}{Hand Designed Features}
-        \blindtext
+      \begin{itemize}
+        \item Bilateral Filter: convolves image with weighted Gaussian kernel; denoises
+the image, while still preserving the edges
+        \item 50/99 Image Rescaling: stretches pixel distribution; increases contrast between
+        foreground and background
+        \item Contrast Limited Adaptive Histogram Equalization: increases contrast locally;
+        increases brightness of small nuclei
+        \item Dilation: convolves image with uniform kernel; increases area of small nuclei
+      \end{itemize}
     \end{block}
 
 \end{column}
@@ -163,11 +171,11 @@ Anything & = Put something here. \\
 
 \vskip3ex
 
-  {\bf Please}: 
-  Put something here. 
-    {\small 
+  {\bf Please}:
+  Put something here.
+    {\small
 \begin{align}
-{\cal L} &= \prod_{i=1}^{n} 
+{\cal L} &= \prod_{i=1}^{n}
 \Pr(T_{wi} > t^0_{wi})^{(1-c_i)}
 \Pr(T_{wi} = t_{wi} \cap T_{pi} > t^0_{pi} )^{c_i (1-d_i)}
 \Pr(T_{wi} = t_{wi} \cap T_{pi} = t_{pi} )^{c_i d_i}. \nonumber
@@ -208,8 +216,8 @@ R code ({\tt plotFigs.R}) accompanying this template will produce all the figure
 
 {\bf Explain the figure here.}
 \begin{itemize}
-\item Put something here. Put something here. Put something here. Put something here. Put something here. 
-\item Put something here. Put something here. Put something here. Put something here. Put something here. 
+\item Put something here. Put something here. Put something here. Put something here. Put something here.
+\item Put something here. Put something here. Put something here. Put something here. Put something here.
 \end{itemize}
 
 \vskip3ex
@@ -236,7 +244,7 @@ R code ({\tt plotFigs.R}) accompanying this template will produce all the figure
   \begin{block}{Sample Block}
     \baselineskip=.7\baselineskip
 \vskip2ex
-    The following table is from the TeXShop template. 
+    The following table is from the TeXShop template.
 
 \vskip2ex
 
@@ -263,7 +271,7 @@ R code ({\tt plotFigs.R}) accompanying this template will produce all the figure
 
 \vskip2ex
 
-{\bf I honestly don't know what this table means.} 
+{\bf I honestly don't know what this table means.}
 \begin{itemize}
 \item This is just
 \item an
@@ -304,8 +312,8 @@ Explain the findings.
   \vskip2ex
 
 {\bf Remember:}\\
-\begin{itemize} 
-\item You'd 
+\begin{itemize}
+\item You'd
 \item better
 \item keep
 \item it
