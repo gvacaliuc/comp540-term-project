@@ -137,8 +137,11 @@
         \begin{tikzpicture}
         \node[inner sep=0pt] (raw) at (0,-12)
             {\includegraphics[width=8cm]{./figs/raw.png}};
+
         \node[inner sep=0pt] (bilateral) at (12,0)
             {\includegraphics[width=8cm]{./figs/bilateral.png}};
+        \node[inner sep=0pt] (bilateral text) at (12,-4)
+            {Bilateral Filtering};
         \draw[->,line width=4pt] (raw.east) -- (bilateral.west);
         \node[inner sep=0pt] (rescale) at (12,-9)
             {\includegraphics[width=8cm]{./figs/rescale.png}};
@@ -149,12 +152,19 @@
         \node[inner sep=0pt] (dilation) at (12,-27)
             {\includegraphics[width=8cm]{./figs/dilation.png}};
         \draw[->,line width=4pt] (raw.east) -- (dilation.west);
+
         \node[inner sep=0pt] (sgd) at (24,-9)
             {\includegraphics[width=8cm]{./figs/sgd.png}};
-        \draw[->,line width=4pt] (rescale.east) -- (sgd.west);
+        \draw[-,line width=4pt] (rescale.east) -- (sgd.west);
+        \draw[-,line width=4pt] (bilateral.east) -- (sgd.west);
+        \draw[-,line width=4pt] (clahe.east) -- (sgd.west);
+        \draw[-,line width=4pt] (dilation.east) -- (sgd.west);
         \node[inner sep=0pt] (pa) at (24,-18)
             {\includegraphics[width=8cm]{./figs/pa.png}};
-        \draw[->,line width=4pt] (clahe.east) -- (pa.west);
+        \draw[-,line width=4pt] (bilateral.east) -- (pa.west);
+        \draw[-,line width=4pt] (rescale.east) -- (pa.west);
+        \draw[-,line width=4pt] (clahe.east) -- (pa.west);
+        \draw[-,line width=4pt] (dilation.east) -- (pa.west);
 
 		\draw[fill=black,opacity=0.2,draw=black] (2.75,1.25) -- (3.75,1.25) -- (3.75,2.25) -- (2.75,2.25) -- (2.75,1.25);
 		\draw[fill=black,opacity=0.2,draw=black] (2.5,1) -- (3.5,1) -- (3.5,2) -- (2.5,2) -- (2.5,1);
@@ -165,6 +175,17 @@
 
         \end{tikzpicture}
     \end{block}
+
+    \begin{columns}[c]
+
+        \column{0.33\textwidth}
+        \begin{block}{a} hi \end{block}
+        \column{0.33\textwidth}
+        \begin{block}{b} hi \end{block}
+        \column{0.33\textwidth}
+        \begin{block}{c} hi \end{block}
+
+    \end{columns}
 
 \end{column}
 
