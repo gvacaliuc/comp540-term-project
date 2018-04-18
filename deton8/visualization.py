@@ -9,7 +9,7 @@ from .computer_vision import ColorMatcher
 
 def plot_prediction(model, features, mask):
 
-    pred = image_predict(features, model)
+    pred = model.predict(features)
 
     plt.figure()
     plt.subplot(131)
@@ -38,8 +38,8 @@ def plot_segmentation(features, pred, mask):
 
 
 def plot_color_transfer_results(
-        trainImages, 
-        style_indices, 
+        trainImages,
+        style_indices,
         grid_size=(5, 5),
         fig_size=(10, 6)):
     """
@@ -77,7 +77,7 @@ def plot_color_transfer_results(
     plt.suptitle("Left: Original Images, Right: Images after Color Transfer")
     plt.show()
 
-def plot_grid(images, title="Example images from the 2018 DS Bowl.", 
+def plot_grid(images, title="Example images from the 2018 DS Bowl.",
         gridsize = (5,10)):
     """
     Plots a grid of images without axes.  images[i] should return the ith
