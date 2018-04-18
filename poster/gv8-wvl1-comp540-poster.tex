@@ -23,6 +23,8 @@
 
 %   Begin Additional Packages
 \usepackage{blindtext}
+\usepackage{graphicx}
+\usepackage{tikz}
 %   End Additional Packages
 
 
@@ -35,10 +37,12 @@
 \newlength{\onecolwid}
 \newlength{\twocolwid}
 \newlength{\threecolwid}
+\newlength{\restofpage}
 \setlength{\sepwid}{0.024\paperwidth}
 \setlength{\onecolwid}{0.24\paperwidth}
 \setlength{\twocolwid}{0.4\paperwidth}
 \setlength{\threecolwid}{0.19\paperwidth}
+\setlength{\restofpage}{0.7\paperwidth}
 
 % ---------------------------------------------------------------------------------------------------%
 % Title, author, date, etc.
@@ -91,19 +95,34 @@
             \end{figure}
         \end{columns}
 
+        \begin{figure}
+            \centering
+            \caption{Original Data.}
+            \label{fig:correlated-features}
+            \includegraphics[width=\textwidth]{./figs/dsbowl18-imagegrid-1x3.png}
+        \end{figure}
+
+        \begin{figure}
+            \centering
+            \caption{Inverted and Whitened Data.}
+            \label{fig:correlated-features}
+            \includegraphics[width=\textwidth]{./figs/dsbowl18-imagegrid-1x3-whitened.png}
+        \end{figure}
+
     \end{block}
 
     \vskip3ex
 
     \begin{block}{Hand Designed Features}
       \begin{itemize}
-        \item Bilateral Filter: convolves image with weighted Gaussian kernel; denoises
-the image, while still preserving the edges
-        \item 50/99 Image Rescaling: stretches pixel distribution; increases contrast between
-        foreground and background
-        \item Contrast Limited Adaptive Histogram Equalization: increases contrast locally;
-        increases brightness of small nuclei
-        \item Dilation: convolves image with uniform kernel; increases area of small nuclei
+        \item Bilateral Filter: convolves image with weighted Gaussian kernel;
+            denoises the image, while still preserving the edges
+        \item 50/99 Image Rescaling: stretches pixel distribution; increases
+            contrast between foreground and background
+        \item Contrast Limited Adaptive Histogram Equalization: increases
+            contrast locally; increases brightness of small nuclei
+        \item Dilation: convolves image with uniform kernel; increases area of
+            small nuclei
       \end{itemize}
     \end{block}
 
@@ -112,243 +131,44 @@ the image, while still preserving the edges
 % -----------------------------------------------------------
 % Start the second column
 % -----------------------------------------------------------
-\begin{column}{\twocolwid}
-\begin{columns}[t,totalwidth=\twocolwid]
-        \begin{column}{\threecolwid}
-  % -----------------------------------------------------------
-  % 2-1a
-  % -----------------------------------------------------------
-  \begin{block}{Sample Block (Left)}
-    \baselineskip=.7\baselineskip
+\begin{column}{\restofpage}
 
-Put whatever you want.
-\begin{itemize}
-\item Yes.
-\item This
-\item is
-\item just
-\item an
-\item example.
-\end{itemize}
+    \begin{block}{Pipeline}
+        \begin{tikzpicture}
+        \node[inner sep=0pt] (raw) at (0,-12)
+            {\includegraphics[width=8cm]{./figs/raw.png}};
+        \node[inner sep=0pt] (bilateral) at (12,0)
+            {\includegraphics[width=8cm]{./figs/bilateral.png}};
+        \draw[->,line width=4pt] (raw.east) -- (bilateral.west);
+        \node[inner sep=0pt] (rescale) at (12,-9)
+            {\includegraphics[width=8cm]{./figs/rescale.png}};
+        \draw[->,line width=4pt] (raw.east) -- (rescale.west);
+        \node[inner sep=0pt] (clahe) at (12,-18)
+            {\includegraphics[width=8cm]{./figs/clahe.png}};
+        \draw[->,line width=4pt] (raw.east) -- (clahe.west);
+        \node[inner sep=0pt] (dilation) at (12,-27)
+            {\includegraphics[width=8cm]{./figs/dilation.png}};
+        \draw[->,line width=4pt] (raw.east) -- (dilation.west);
+        \node[inner sep=0pt] (sgd) at (24,-9)
+            {\includegraphics[width=8cm]{./figs/sgd.png}};
+        \draw[->,line width=4pt] (rescale.east) -- (sgd.west);
+        \node[inner sep=0pt] (pa) at (24,-18)
+            {\includegraphics[width=8cm]{./figs/pa.png}};
+        \draw[->,line width=4pt] (clahe.east) -- (pa.west);
 
-\vskip1ex
-  \end{block}
-    \end{column}
-    \begin{column}{3.75ex}\end{column}
-        \begin{column}{\threecolwid}
+		\draw[fill=black,opacity=0.2,draw=black] (2.75,1.25) -- (3.75,1.25) -- (3.75,2.25) -- (2.75,2.25) -- (2.75,1.25);
+		\draw[fill=black,opacity=0.2,draw=black] (2.5,1) -- (3.5,1) -- (3.5,2) -- (2.5,2) -- (2.5,1);
+		\draw[fill=black,opacity=0.2,draw=black] (2.25,0.75) -- (3.25,0.75) -- (3.25,1.75) -- (2.25,1.75) -- (2.25,0.75);
+		\draw[fill=black,opacity=0.2,draw=black] (2,0.5) -- (3,0.5) -- (3,1.5) -- (2,1.5) -- (2,0.5);
+		\draw[fill=black,opacity=0.2,draw=black] (1.75,0.25) -- (2.75,0.25) -- (2.75,1.25) -- (1.75,1.25) -- (1.75,0.25);
+		\draw[fill=black,opacity=0.2,draw=black] (1.5,0) -- (2.5,0) -- (2.5,1) -- (1.5,1) -- (1.5,0);
 
-  % -----------------------------------------------------------
-  % 2-1b
-  % -----------------------------------------------------------
-  \begin{block}{Sample Block (Right)}
-    \baselineskip=.7\baselineskip
-
-Put whatever you want.
-\vspace{1ex}
-\begin{itemize}
-\item No.
-\item This
-\item is
-\item not
-\item a real
-\item poster.
-\end{itemize}
-  \end{block}
-    \end{column}
-   \end{columns}
-  \vskip2ex
-
-  % -----------------------------------------------------------
-  % 2-3
-  % -----------------------------------------------------------
-  \begin{alertblock}{Sample Block (Wide)}
-\begin{columns}[c] \column{.45\textwidth}
-%      \vskip1ex
-  {\bf This block is wide.}
-  \begin{itemize}
-  \item Put something here.Put something here.Put something here.
-  \item Put something here.Put something here.
-  \item Don't you get it? Put something here.
-  \end{itemize}
-
-%\vskip2ex
-
-% Phantom column
-\column{.01\textwidth}
-\begin{beamercolorbox}[wd=.1in,ht=2in]{cboxg}\end{beamercolorbox}
-\vskip2ex
-
-\column{.45\textwidth}
-\vskip2ex
-  {\bf Put something here.}
-  \vskip1ex
-\begin{tabular}{>{\color{myred}}rl}
-Something & = Blur blur blur\\
-    & Yadi Yadi Ya \\ [1em]
-Anything & = Put something here. \\
-    & OK?
-\end{tabular}
-
-\end{columns}
-
-\vskip3ex
-
-  {\bf Please}:
-  Put something here.
-    {\small
-\begin{align}
-{\cal L} &= \prod_{i=1}^{n}
-\Pr(T_{wi} > t^0_{wi})^{(1-c_i)}
-\Pr(T_{wi} = t_{wi} \cap T_{pi} > t^0_{pi} )^{c_i (1-d_i)}
-\Pr(T_{wi} = t_{wi} \cap T_{pi} = t_{pi} )^{c_i d_i}. \nonumber
-\end{align}
-}
-
-  \end{alertblock}
-
-\vskip2ex
-
-  % -----------------------------------------------------------
-  % 2-3
-  % -----------------------------------------------------------
-  \begin{block}{Another Sample Block}
-  \vskip-2ex
-  \begin{figure}[h]
-\hfill
-\begin{minipage}[t]{.49\textwidth}
-\begin{center}
-\caption{Figure Title Here}
-    \includegraphics{./figs/figLeft}
-\end{center}
-\end{minipage}
-\hfill
-\begin{minipage}[t]{.49\textwidth}
-\begin{center}
-\caption{Figure Title Here}
-    \includegraphics{./figs/figRight}
-\end{center}
-\end{minipage}
-\hfill
-\end{figure}
-\vskip3ex
-
-R code ({\tt plotFigs.R}) accompanying this template will produce all the figures included in this poster (except for the Rice Logo).
-
-\vskip1ex
-
-{\bf Explain the figure here.}
-\begin{itemize}
-\item Put something here. Put something here. Put something here. Put something here. Put something here.
-\item Put something here. Put something here. Put something here. Put something here. Put something here.
-\end{itemize}
-
-\vskip3ex
-
-{\bf Put something here.}
-\begin{itemize}
-\item Blur Blur Blur
-\item Yadi Yadi Yah
-\end{itemize}
-
-  \end{block}
+        \end{tikzpicture}
+    \end{block}
 
 \end{column}
 
-% -----------------------------------------------------------
-% Start the third column
-% -----------------------------------------------------------
-\begin{column}{\onecolwid}
-\vskip3ex
-
-  % -----------------------------------------------------------
-  % 3-0
-  % -----------------------------------------------------------
-  \begin{block}{Sample Block}
-    \baselineskip=.7\baselineskip
-\vskip2ex
-    The following table is from the TeXShop template.
-
-\vskip2ex
-
-% Requires the booktabs if the memoir class is not being used
-\begin{table}[htbp]
-\centering
-%\topcaption{Table captions are better up top} % requires the topcapt package
-\begin{tabular}{@{} lcr @{}} % Column formatting, @{} suppresses leading/trailing space
-  \toprule
-  \multicolumn{2}{c}{Item} \\
-  \cmidrule(r){1-2} % Partial rule. (r) trims the line a little bit on the right; (l) & (lr) also possible
-  Animal    & Description & Price (\$)\\
-  \midrule
-  Gnat      & per gram & 13.65 \\
-            & each     &  0.01 \\
-  Gnu       & stuffed  & 92.50 \\
-  Emu       & stuffed  & 33.33 \\
-  Armadillo & frozen   &  8.99 \\
-  \bottomrule
-\end{tabular}
-\caption{Remember, \emph{never} use vertical lines in tables.}
-\label{tab:booktabs}
-\end{table}
-
-\vskip2ex
-
-{\bf I honestly don't know what this table means.}
-\begin{itemize}
-\item This is just
-\item an
-\item example.
-\end{itemize}
-
-  \end{block}
-
-\vskip3ex
-
-
-  % -----------------------------------------------------------
-  % 3-4
-  % -----------------------------------------------------------
-  \begin{alertblock}{Findings}
-    \baselineskip=.7\baselineskip
-
-  \vskip2ex
-
-\begin{figure}
-\begin{center}
-\caption{Effect of X on Y}
-    \includegraphics{./figs/figResult}
-\end{center}
-\end{figure}
-Explain the findings.
-  \vskip2ex
-
-\end{alertblock}
-  \vskip2ex
-
-  % -----------------------------------------------------------
-  % 3-4
-  % -----------------------------------------------------------
-  \begin{block}{Conclusion}
-    \baselineskip=.7\baselineskip
-
-  \vskip2ex
-
-{\bf Remember:}\\
-\begin{itemize}
-\item You'd
-\item better
-\item keep
-\item it
-\item simple!
-\end{itemize}
-
-  \vskip2ex
-
-\end{block}
-  \vskip2ex
-
-
-\end{column}
 \end{columns}
+
 \end{frame}
 \end{document}
