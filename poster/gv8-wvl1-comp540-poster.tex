@@ -206,11 +206,24 @@
     \begin{columns}[c]
 
         \column{0.33\textwidth}
-        \begin{block}{a} hi \end{block}
+        \begin{block}{Segmentation: \newline Non-Max Supression Watershed} \end{block}
         \column{0.33\textwidth}
-        \begin{block}{b} hi \end{block}
+        \begin{block}{Model Pixel Validation F1's}
+          \begin{itemize}
+            \item PA-Regressor w/ Global Thresholding: .76
+            \item SGD-Regressor w/ Global Thresholding: .83
+            \item U-Net: .89
+          \end{itemize}
+        \end{block}
         \column{0.33\textwidth}
-        \begin{block}{c} hi \end{block}
+        \begin{block}{Histories}
+          \begin{itemize}
+            \item Kaggle: 40 sumissions entered uniformly throughout the past
+            3 months. No successful submissions other than provided sample submissions.
+            \item Git Commit History: \newline
+              \includegraphics[width=\textwidth]{./figs/commit_graph.png}
+          \end{itemize}
+        \end{block}
 
     \end{columns}
 
