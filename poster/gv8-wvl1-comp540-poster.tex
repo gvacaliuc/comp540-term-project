@@ -66,6 +66,12 @@
 \begin{column}{\onecolwid}
 
     \begin{block}{Introduction}
+      \begin{itemize}
+        \item Modern medicine generate lots of data that needs to be processed
+        \item This often involves hand labeling data such as images
+        \item It is desirable to automate this process
+        \item One example is labeling microscopic nuclei in images
+      \end{itemize}
     \end{block}
 
     \vskip3ex
@@ -76,7 +82,7 @@
             \begin{itemize}
                 \item since the input data is of a range of sizes, we reshape all
                     images to (256, 256)
-                \item we negate all images with a white background so we can 
+                \item we negate all images with a white background so we can
                     assosciate brightness with nuclei
                 \item since the color channels are highly correlated, we whiten
                     the data, resulting in greyscale images with reduced
