@@ -9,7 +9,7 @@ from .computer_vision import ColorMatcher
 
 def plot_prediction(model, features, mask):
 
-    pred = image_predict(features, model)
+    pred = model.predict(features)
 
     plt.figure()
     plt.subplot(131)
@@ -38,8 +38,8 @@ def plot_segmentation(features, pred, mask):
 
 
 def plot_color_transfer_results(
-        trainImages, 
-        style_indices, 
+        trainImages,
+        style_indices,
         grid_size=(5, 5),
         fig_size=(10, 6)):
     """
@@ -77,8 +77,12 @@ def plot_color_transfer_results(
     plt.suptitle("Left: Original Images, Right: Images after Color Transfer")
     plt.show()
 
-def plot_grid(images, title="Example images from the 2018 DS Bowl.", 
-        gridsize = (5,10)):
+def plot_grid(
+        images, 
+        title="Example images from the 2018 DS Bowl.", 
+        gridsize = (5,10),
+        cmap = 'Blues',
+        figsize = (10, 6)):
     """
     Plots a grid of images without axes.  images[i] should return the ith
     image.
@@ -86,19 +90,19 @@ def plot_grid(images, title="Example images from the 2018 DS Bowl.",
 
     num_images = np.prod(gridsize)
 
-    if len(images) < num_images:
+    if not len(images) == num_images:
         raise ValueError("Not enough images to plot.")
 
     plot_images = images.reshape((*gridsize, *images.shape[1:]))
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=figsize)
 
     gs = GridSpec(*gridsize)
 
     for i in range(gridsize[0]):
         for j in range(gridsize[1]):
             ax = plt.subplot(gs[i, j])
-            ax.imshow(plot_images[i, j])
+            ax.imshow(plot_images[i, j], cmap=cmap)
             ax.axis('off')
 
     fig.suptitle(title)

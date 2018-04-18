@@ -12,15 +12,16 @@ from .analytical import *
 from .computer_vision import preprocess_image
 from .computer_vision import postprocess
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 
 class DataReader(object):
 
-    def __init__(self, 
-            directory, 
-            train=True, 
+    def __init__(self,
+            directory,
+            train=True,
             imsize=(256, 256),
-            num_channels=3, 
+            num_channels=3,
             scale=True,
             invert_white_images=True):
         """
@@ -54,8 +55,13 @@ class DataReader(object):
 
         path = filename.split("/")
         image_id = path[len(self.directory.split("/")) - 1]
-
-        img = imread(filename)[:, :, :self.num_channels]
+        img = imread(filename)
+        if (len(img.shape) == 2):
+            new_img = np.zeros((*img.shape, 3))
+            for i in range(3):
+                new_img[:, :, i] = img
+            img = new_img
+        img = img[:, :, :self.num_channels]
         orig_shape = img.shape[:2]
         img = self._process(img)
 
@@ -131,11 +137,11 @@ class DataReader(object):
 
 class NucleiDataset(object):
 
-    def __init__(self, 
-            directory, 
-            train=True, 
+    def __init__(self,
+            directory,
+            train=True,
             imsize=(256, 256),
-            num_channels=3, 
+            num_channels=3,
             scale=True,
             invert_white_images=True):
         """
@@ -222,7 +228,7 @@ class NucleiDataset(object):
         self.masks_ = np.zeros((num_images, *self.imsize))
         self.images_ = np.zeros((num_images, *self.imsize, self.num_channels))
 
-        for im_num, filename in enumerate(self.data_ic_.files[:num_images]):
+        for im_num, filename in tqdm(enumerate(self.data_ic_.files[:num_images]), unit='pair'):
             img, mask, image_id, orig_shape = self._load_image(filename)
             self.images_[im_num] = img
             self.masks_[im_num] = mask

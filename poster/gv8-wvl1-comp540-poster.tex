@@ -1,14 +1,14 @@
 % Written by Daina Chiba (daina.chiba@gmail.com).
 % It was mostly copied from two poster style files:
 % beamerthemeI6pd2.sty written by
-%	 	Philippe Dreuw <dreuw@cs.rwth-aachen.de> and 
+%	 	Philippe Dreuw <dreuw@cs.rwth-aachen.de> and
 % 		Thomas Deselaers <deselaers@cs.rwth-aachen.de>
 % and beamerthemeconfposter.sty written by
 %     Nathaniel Johnston (nathaniel@nathanieljohnston.com)
 %		http://www.nathanieljohnston.com/2009/08/latex-poster-template/
-% ---------------------------------------------------------------------------------------------------% 
+% ---------------------------------------------------------------------------------------------------%
 % Preamble
-% ---------------------------------------------------------------------------------------------------% 
+% ---------------------------------------------------------------------------------------------------%
 \documentclass[final]{beamer}
 \usepackage[orientation=landscape,size=custom,width=110,height=86,scale=1.2,debug]{beamerposter}
 \mode<presentation>{\usetheme{RicePoster}}
@@ -23,10 +23,12 @@
 
 %   Begin Additional Packages
 \usepackage{blindtext}
+\usepackage{graphicx}
+\usepackage{tikz}
 %   End Additional Packages
 
 
-% comment 
+% comment
 \newcommand{\comment}[1]{}
 
 \newlength{\columnheight}
@@ -35,25 +37,27 @@
 \newlength{\onecolwid}
 \newlength{\twocolwid}
 \newlength{\threecolwid}
+\newlength{\restofpage}
 \setlength{\sepwid}{0.024\paperwidth}
 \setlength{\onecolwid}{0.24\paperwidth}
 \setlength{\twocolwid}{0.4\paperwidth}
 \setlength{\threecolwid}{0.19\paperwidth}
+\setlength{\restofpage}{0.7\paperwidth}
 
-% ---------------------------------------------------------------------------------------------------% 
+% ---------------------------------------------------------------------------------------------------%
 % Title, author, date, etc.
-% ---------------------------------------------------------------------------------------------------% 
+% ---------------------------------------------------------------------------------------------------%
 \title{\huge deton8: Detector of Nuclei}
 \author{Will LeVine \& Gabriel Vacaliuc}
 \institute[Rice University]{Department of Computer Science, Rice University}
 \date[Apr.2018]{April, 2018}
-\def\conference{COMP540 Term Project: 2018 Data Science Bowl} 
+\def\conference{COMP540 Term Project: 2018 Data Science Bowl}
 \def\yourEmail{wvl1@rice.edu,gv8@rice.edu}
 
 
-% ---------------------------------------------------------------------------------------------------% 
+% ---------------------------------------------------------------------------------------------------%
 % Contents
-% ---------------------------------------------------------------------------------------------------% 
+% ---------------------------------------------------------------------------------------------------%
 \begin{document}
 \begin{frame}[t]
 
@@ -62,19 +66,70 @@
 \begin{column}{\onecolwid}
 
     \begin{block}{Introduction}
-        \blindtext
+      \begin{itemize}
+        \item Modern medicine generate lots of data that needs to be processed
+        \item This often involves hand labeling data such as images
+        \item It is desirable to automate this process
+        \item One example is labeling microscopic nuclei in images
+      \end{itemize}
     \end{block}
 
     \vskip3ex
 
     \begin{block}{Preprocessing \& Data Whitening}
-        \blindtext
+        \begin{columns}[c]
+            \column{.49\textwidth}
+            \begin{itemize}
+                \item since the input data is of a range of sizes, we reshape all
+                    images to (256, 256)
+                \item we negate all images with a white background so we can
+                    assosciate brightness with nuclei
+                \item since the color channels are highly correlated, we whiten
+                    the data, resulting in greyscale images with reduced
+                    modality effects
+            \end{itemize}
+
+            \column{.02\textwidth}
+
+            \column{.49\textwidth}
+
+            \begin{figure}
+                \centering
+                \caption{3D Plot of a sample of the training set.}
+                \label{fig:correlated-features}
+                \includegraphics[width=\textwidth]{../paper/figs/correlated-features.png}
+            \end{figure}
+        \end{columns}
+
+        \begin{figure}
+            \centering
+            \caption{Original Data.}
+            \label{fig:correlated-features}
+            \includegraphics[width=\textwidth]{./figs/dsbowl18-imagegrid-1x3.png}
+        \end{figure}
+
+        \begin{figure}
+            \centering
+            \caption{Inverted and Whitened Data.}
+            \label{fig:correlated-features}
+            \includegraphics[width=\textwidth]{./figs/dsbowl18-imagegrid-1x3-whitened.png}
+        \end{figure}
+
     \end{block}
 
     \vskip3ex
 
     \begin{block}{Hand Designed Features}
-        \blindtext
+      \begin{itemize}
+        \item Bilateral Filter: convolves image with weighted Gaussian kernel;
+            denoises the image, while still preserving the edges
+        \item 50/99 Image Rescaling: stretches pixel distribution; increases
+            contrast between foreground and background
+        \item Contrast Limited Adaptive Histogram Equalization: increases
+            contrast locally; increases brightness of small nuclei
+        \item Dilation: convolves image with uniform kernel; increases area of
+            small nuclei
+      \end{itemize}
     \end{block}
 
 \end{column}
@@ -82,243 +137,99 @@
 % -----------------------------------------------------------
 % Start the second column
 % -----------------------------------------------------------
-\begin{column}{\twocolwid}
-\begin{columns}[t,totalwidth=\twocolwid]
-        \begin{column}{\threecolwid}
-  % -----------------------------------------------------------
-  % 2-1a
-  % -----------------------------------------------------------
-  \begin{block}{Sample Block (Left)}
-    \baselineskip=.7\baselineskip
+\begin{column}{\restofpage}
 
-Put whatever you want.
-\begin{itemize}
-\item Yes.
-\item This
-\item is
-\item just
-\item an
-\item example.
-\end{itemize}
+    \begin{block}{Pipeline}
+        \begin{tikzpicture}
+        \node[inner sep=0pt] (raw) at (0,-13.5)
+            {\includegraphics[width=8cm]{./figs/raw.png}};
+        \node[inner sep=0pt] (raw lbl) at (0,-17.5)
+            {Raw Image};
+        \node[inner sep=0pt] (bilateral) at (12,0)
+            {\includegraphics[width=8cm]{./figs/bilateral.png}};
+        \node[inner sep=0pt] (bilateral lbl) at (12,-4)
+            {Bilateral Filtering};
+        \draw[->,line width=4pt] (raw.east) -- (bilateral.west);
+        \node[inner sep=0pt] (rescale) at (12,-9)
+            {\includegraphics[width=8cm]{./figs/rescale.png}};
+        \node[inner sep=0pt] (rescale lbl) at (12,-13)
+            {Rescaling};
+        \draw[->,line width=4pt] (raw.east) -- (rescale.west);
+        \node[inner sep=0pt] (clahe) at (12,-18)
+            {\includegraphics[width=8cm]{./figs/clahe.png}};
+        \node[inner sep=0pt] (clahe lbl) at (12,-22)
+            {CLAHE};
+        \draw[->,line width=4pt] (raw.east) -- (clahe.west);
+        \node[inner sep=0pt] (dilation) at (12,-27)
+            {\includegraphics[width=8cm]{./figs/dilation.png}};
+        \node[inner sep=0pt] (dilation lbl) at (12,-31)
+            {Dilation};
+        \draw[->,line width=4pt] (raw.east) -- (dilation.west);
 
-\vskip1ex
-  \end{block}
-    \end{column}
-    \begin{column}{3.75ex}\end{column}
-        \begin{column}{\threecolwid}
+        \node[inner sep=0pt] (sgd) at (24,-9)
+            {\includegraphics[width=8cm]{./figs/sgd.png}};
+        \node[inner sep=0pt] (sgd lbl) at (24,-13)
+            {SGD Output};
+        \draw[-,line width=4pt] (rescale.east) -- (sgd.west);
+        \draw[-,line width=4pt] (bilateral.east) -- (sgd.west);
+        \draw[-,line width=4pt] (clahe.east) -- (sgd.west);
+        \draw[-,line width=4pt] (dilation.east) -- (sgd.west);
+        \node[inner sep=0pt] (pa) at (24,-18)
+            {\includegraphics[width=8cm]{./figs/pa.png}};
+        \node[inner sep=0pt] (pa lbl) at (24,-22)
+            {PA Output};
+        \draw[-,line width=4pt] (bilateral.east) -- (pa.west);
+        \draw[-,line width=4pt] (rescale.east) -- (pa.west);
+        \draw[-,line width=4pt] (clahe.east) -- (pa.west);
+        \draw[-,line width=4pt] (dilation.east) -- (pa.west);
 
-  % -----------------------------------------------------------
-  % 2-1b
-  % -----------------------------------------------------------
-  \begin{block}{Sample Block (Right)}
-    \baselineskip=.7\baselineskip
+        \node[] (stack ptr) at (31.5, -13.5)
+            {};
+        \draw[-,line width=4pt] (raw.east) -- (stack ptr.west);
+        \draw[-,line width=4pt] (sgd.east) -- (stack ptr.west);
+        \draw[-,line width=4pt] (pa.east) -- (stack ptr.west);
+        \node[inner sep=0pt] (bilateral stack) at (39,-10)
+            {\includegraphics[width=8cm]{./figs/bilateral.png}};
+        \node[inner sep=0pt] (rescale stack) at (38,-12)
+            {\includegraphics[width=8cm]{./figs/rescale.png}};
+        \node[inner sep=0pt] (clahe stack) at (37,-14)
+            {\includegraphics[width=8cm]{./figs/clahe.png}};
+        \node[inner sep=0pt] (dilation stack) at (36,-16)
+            {\includegraphics[width=8cm]{./figs/dilation.png}};
+        \node[inner sep=0pt] (sgd stack) at (35,-18)
+            {\includegraphics[width=8cm]{./figs/sgd.png}};
+        \node[inner sep=0pt] (pa stack) at (34,-20)
+            {\includegraphics[width=8cm]{./figs/pa.png}};
+        \end{tikzpicture}
+    \end{block}
 
-Put whatever you want.
-\vspace{1ex}
-\begin{itemize}
-\item No.
-\item This
-\item is
-\item not
-\item a real
-\item poster.
-\end{itemize}
-  \end{block}
-    \end{column}
-   \end{columns}
-  \vskip2ex
+    \begin{columns}[c]
 
-  % -----------------------------------------------------------
-  % 2-3
-  % -----------------------------------------------------------
-  \begin{alertblock}{Sample Block (Wide)}
-\begin{columns}[c] \column{.45\textwidth}
-%      \vskip1ex
-  {\bf This block is wide.}
-  \begin{itemize}
-  \item Put something here.Put something here.Put something here.
-  \item Put something here.Put something here.
-  \item Don't you get it? Put something here.
-  \end{itemize}
+        \column{0.33\textwidth}
+        \begin{block}{Segmentation: \newline Non-Max Supression Watershed} \end{block}
+        \column{0.33\textwidth}
+        \begin{block}{Model Pixel Validation F1's}
+          \begin{itemize}
+            \item PA-Regressor w/ Global Thresholding: .76
+            \item SGD-Regressor w/ Global Thresholding: .83
+            \item U-Net: .89
+          \end{itemize}
+        \end{block}
+        \column{0.33\textwidth}
+        \begin{block}{Histories}
+          \begin{itemize}
+            \item Kaggle: 40 sumissions entered uniformly throughout the past
+            3 months. No successful submissions other than provided sample submissions.
+            \item Git Commit History: \newline
+              \includegraphics[width=\textwidth]{./figs/commit_graph.png}
+          \end{itemize}
+        \end{block}
 
-%\vskip2ex
-
-% Phantom column
-\column{.01\textwidth}
-\begin{beamercolorbox}[wd=.1in,ht=2in]{cboxg}\end{beamercolorbox}
-\vskip2ex
-
-\column{.45\textwidth}
-\vskip2ex
-  {\bf Put something here.}
-  \vskip1ex
-\begin{tabular}{>{\color{myred}}rl}
-Something & = Blur blur blur\\
-    & Yadi Yadi Ya \\ [1em]
-Anything & = Put something here. \\
-    & OK?
-\end{tabular}
-
-\end{columns}
-
-\vskip3ex
-
-  {\bf Please}: 
-  Put something here. 
-    {\small 
-\begin{align}
-{\cal L} &= \prod_{i=1}^{n} 
-\Pr(T_{wi} > t^0_{wi})^{(1-c_i)}
-\Pr(T_{wi} = t_{wi} \cap T_{pi} > t^0_{pi} )^{c_i (1-d_i)}
-\Pr(T_{wi} = t_{wi} \cap T_{pi} = t_{pi} )^{c_i d_i}. \nonumber
-\end{align}
-}
-
-  \end{alertblock}
-
-\vskip2ex
-
-  % -----------------------------------------------------------
-  % 2-3
-  % -----------------------------------------------------------
-  \begin{block}{Another Sample Block}
-  \vskip-2ex
-  \begin{figure}[h]
-\hfill
-\begin{minipage}[t]{.49\textwidth}
-\begin{center}
-\caption{Figure Title Here}
-    \includegraphics{./figs/figLeft}
-\end{center}
-\end{minipage}
-\hfill
-\begin{minipage}[t]{.49\textwidth}
-\begin{center}
-\caption{Figure Title Here}
-    \includegraphics{./figs/figRight}
-\end{center}
-\end{minipage}
-\hfill
-\end{figure}
-\vskip3ex
-
-R code ({\tt plotFigs.R}) accompanying this template will produce all the figures included in this poster (except for the Rice Logo).
-
-\vskip1ex
-
-{\bf Explain the figure here.}
-\begin{itemize}
-\item Put something here. Put something here. Put something here. Put something here. Put something here. 
-\item Put something here. Put something here. Put something here. Put something here. Put something here. 
-\end{itemize}
-
-\vskip3ex
-
-{\bf Put something here.}
-\begin{itemize}
-\item Blur Blur Blur
-\item Yadi Yadi Yah
-\end{itemize}
-
-  \end{block}
+    \end{columns}
 
 \end{column}
 
-% -----------------------------------------------------------
-% Start the third column
-% -----------------------------------------------------------
-\begin{column}{\onecolwid}
-\vskip3ex
-
-  % -----------------------------------------------------------
-  % 3-0
-  % -----------------------------------------------------------
-  \begin{block}{Sample Block}
-    \baselineskip=.7\baselineskip
-\vskip2ex
-    The following table is from the TeXShop template. 
-
-\vskip2ex
-
-% Requires the booktabs if the memoir class is not being used
-\begin{table}[htbp]
-\centering
-%\topcaption{Table captions are better up top} % requires the topcapt package
-\begin{tabular}{@{} lcr @{}} % Column formatting, @{} suppresses leading/trailing space
-  \toprule
-  \multicolumn{2}{c}{Item} \\
-  \cmidrule(r){1-2} % Partial rule. (r) trims the line a little bit on the right; (l) & (lr) also possible
-  Animal    & Description & Price (\$)\\
-  \midrule
-  Gnat      & per gram & 13.65 \\
-            & each     &  0.01 \\
-  Gnu       & stuffed  & 92.50 \\
-  Emu       & stuffed  & 33.33 \\
-  Armadillo & frozen   &  8.99 \\
-  \bottomrule
-\end{tabular}
-\caption{Remember, \emph{never} use vertical lines in tables.}
-\label{tab:booktabs}
-\end{table}
-
-\vskip2ex
-
-{\bf I honestly don't know what this table means.} 
-\begin{itemize}
-\item This is just
-\item an
-\item example.
-\end{itemize}
-
-  \end{block}
-
-\vskip3ex
-
-
-  % -----------------------------------------------------------
-  % 3-4
-  % -----------------------------------------------------------
-  \begin{alertblock}{Findings}
-    \baselineskip=.7\baselineskip
-
-  \vskip2ex
-
-\begin{figure}
-\begin{center}
-\caption{Effect of X on Y}
-    \includegraphics{./figs/figResult}
-\end{center}
-\end{figure}
-Explain the findings.
-  \vskip2ex
-
-\end{alertblock}
-  \vskip2ex
-
-  % -----------------------------------------------------------
-  % 3-4
-  % -----------------------------------------------------------
-  \begin{block}{Conclusion}
-    \baselineskip=.7\baselineskip
-
-  \vskip2ex
-
-{\bf Remember:}\\
-\begin{itemize} 
-\item You'd 
-\item better
-\item keep
-\item it
-\item simple!
-\end{itemize}
-
-  \vskip2ex
-
-\end{block}
-  \vskip2ex
-
-
-\end{column}
 \end{columns}
+
 \end{frame}
 \end{document}
