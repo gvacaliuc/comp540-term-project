@@ -62,13 +62,35 @@
 \begin{column}{\onecolwid}
 
     \begin{block}{Introduction}
-        \blindtext
     \end{block}
 
     \vskip3ex
 
     \begin{block}{Preprocessing \& Data Whitening}
-        \blindtext
+        \begin{columns}[c]
+            \column{.49\textwidth}
+            \begin{itemize}
+                \item since the input data is of a range of sizes, we reshape all
+                    images to (256, 256)
+                \item we negate all images with a white background so we can 
+                    assosciate brightness with nuclei
+                \item since the color channels are highly correlated, we whiten
+                    the data, resulting in greyscale images with reduced
+                    modality effects
+            \end{itemize}
+
+            \column{.02\textwidth}
+
+            \column{.49\textwidth}
+
+            \begin{figure}
+                \centering
+                \caption{3D Plot of a sample of the training set.}
+                \label{fig:correlated-features}
+                \includegraphics[width=\textwidth]{../paper/figs/correlated-features.png}
+            \end{figure}
+        \end{columns}
+
     \end{block}
 
     \vskip3ex
