@@ -8,7 +8,7 @@ from .computer_vision import postprocess
 import matplotlib.pyplot as plt
 
 
-def watershed_cc(pred, original, nms_min_distance=5, watershed_line=True,
+def watershed_cc(pred, original, nms_min_distance=1, watershed_line=True,
                  return_mask=False):
     """
     Finds a set of components believed to be individual nuclei using the
@@ -24,7 +24,7 @@ def watershed_cc(pred, original, nms_min_distance=5, watershed_line=True,
              as a full mask w/ unique integers indicating components if
              return_mask is True.
     """
-    im = np.multiply(postprocess(pred), original[:, :, 1])
+    im = np.multiply(pred, original[:, :, 1])
     dt = ndimage.distance_transform_edt(im)
     peaks = feature.peak_local_max(
             dt,
@@ -34,7 +34,7 @@ def watershed_cc(pred, original, nms_min_distance=5, watershed_line=True,
     local_maxes = list(zip(*np.where(peaks == True)))
     for coord1 in local_maxes.copy():
         for coord2 in local_maxes.copy():
-            if np.linalg.norm(np.array(coord1) - np.array(coord2)) < 25 and np.linalg.norm(im[coord1] - im[coord2]) < .1 and coord1 in local_maxes and not coord1 == coord2:
+            if np.linalg.norm(np.array(coord1) - np.array(coord2)) < 30 and np.linalg.norm(im[coord1] - im[coord2]) < .1 and coord1 in local_maxes and not coord1 == coord2:
                 local_maxes.remove(coord2)
                 peaks[coord2] = 0
     markers = measure.label(peaks)

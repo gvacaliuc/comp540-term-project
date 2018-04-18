@@ -9,7 +9,7 @@ from .computer_vision import ColorMatcher
 
 def plot_prediction(model, features, mask):
 
-    pred = image_predict(features, model)
+    pred = model.predict(features)
 
     plt.figure()
     plt.subplot(131)
@@ -38,8 +38,8 @@ def plot_segmentation(features, pred, mask):
 
 
 def plot_color_transfer_results(
-        trainImages, 
-        style_indices, 
+        trainImages,
+        style_indices,
         grid_size=(5, 5),
         fig_size=(10, 6)):
     """
