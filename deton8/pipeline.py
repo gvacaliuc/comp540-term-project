@@ -4,6 +4,7 @@ from .computer_vision import postprocess
 import numpy as np
 
 from sklearn.decomposition import PCA
+from sklearn.externals import joblib
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, MinMaxScaler
 from tempfile import mkdtemp
@@ -11,6 +12,7 @@ from .analytical import BasisTransformer
 from .models import MiniBatchRegressor
 
 from .utils import NucleiDataset, flatten_data, expand_data
+
 
 def pipeline(directory, train=True, max_size=None):
     dataset = NucleiDataset(directory, train=train).load(max_size=max_size)
@@ -22,6 +24,7 @@ def pipeline(directory, train=True, max_size=None):
     x_postprocessed = np.array([postprocess(im, min_area = 15) for im in x_predictions])
     return x_postprocessed, metadata
 
+
 def LinearPipeline(memory=mkdtemp()):
     """
     Returns a sklearn.pipeline.Pipeline with our pipeline preconfigured.
@@ -30,10 +33,25 @@ def LinearPipeline(memory=mkdtemp()):
 
     return Pipeline(
         [("flattener", FunctionTransformer(flatten_data, validate=False)),
-         ("whitener", 
+         ("whitener",
           PCA(n_components=1, svd_solver='randomized', whiten=True)),
          ("minmaxscaler", MinMaxScaler()),
          ("expander", FunctionTransformer(expand_data, validate=False)),
          ("basis_transformer", BasisTransformer()),
          ("regressor", MiniBatchRegressor(batch_size=1000, num_iters=1000))],
         memory=memory)
+
+
+def save(pipeline, path):
+    """
+    Save a pipeline to a .pkl file.
+    """
+
+    joblib.dump(pipeline, path)
+
+def load(path):
+    """
+    Load a pipeline from a .pkl file.
+    """
+
+    return joblib.load(path)
