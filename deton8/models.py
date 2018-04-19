@@ -9,6 +9,7 @@ import inspect
 import numpy as np
 from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.linear_model import SGDRegressor
+from tqdm import tqdm
 
 from .utils import flatten_data
 
@@ -22,8 +23,7 @@ class MiniBatchRegressor(BaseEstimator, RegressorMixin):
             regressor = SGDRegressor(),
             batch_size = 400,
             num_iters = 400,
-            verbose = False,
-            tqdm = lambda x: x):
+            verbose = False):
         """
         Instantiates MiniBatchImageRegressor with the given parameters.
         """
@@ -52,7 +52,7 @@ class MiniBatchRegressor(BaseEstimator, RegressorMixin):
 
         arange = np.arange(x_flat.shape[0])
 
-        for itr in self.tqdm(range(self.num_iters)):
+        for itr in tqdm(range(self.num_iters), unit="iteration"):
             batch_idx = np.random.choice(arange, size=self.batch_size)
             if self.verbose:
                 print("Iteration {}/{}".format(itr, self.num_iters))
