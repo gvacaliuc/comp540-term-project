@@ -10,15 +10,16 @@ import pandas as pd
 from skimage.transform import resize
 from sklearn.base import BaseEstimator
 
-def rle_encode(mask):
+def rle_encode(mask, index_start=1):
     pixels = mask.flatten(order = 'F')
-    # We need to allow for cases where there is a '1' at either end of the sequence.
-    # We do this by padding with a zero at each end.
+    # We need to allow for cases where there is a '1' at either end of the
+    # sequence.  We do this by padding with a zero at each end. 
     pixel_padded = np.zeros([len(pixels) + 2], dtype=pixels.dtype)
     pixel_padded[1:-1] = pixels
     pixels = pixel_padded
-    rle = np.where(pixels[1:] != pixels[:-1])[0] + 1
-    rle[1::2] = rle[1::2] - rle[:-1:2]
+    rle = np.where(pixels[1:] != pixels[:-1])[0]
+    rle[1::2] = rle[1::2] - rle[::2]
+    rle[::2] += index_start
     return rle
 
 
@@ -99,3 +100,49 @@ class RLEncoder(BaseEstimator):
                                 "rle_mask": "EncodedPixels"})
 
         return df
+
+
+def _check_encoding(encoding, image_shape):
+    """
+    Checks a single encoding.
+    """
+
+    start_inds = encoding[::2]
+    lengths = encoding[1::2]
+
+    end_inds = start_inds + lengths
+
+    assert(len(start_inds) == len(lengths))
+    #   That they're sorted
+    assert(np.all(np.argsort(start_inds) == np.arange(len(start_inds))))
+    #   That they're positive
+    assert(np.all(start_inds > 0))
+    assert(np.all(lengths > 0))
+    #   That they don't overlap, and have at least 1 pixel in between
+    #   (otherwise they'd be joined)
+    assert(np.all(end_inds[:-1] < start_inds[1:]))
+    #   That it doesn't extend past the end
+    assert((end_inds[-1] - 1 ) <= np.prod(image_shape))
+
+
+def check_encodings(encodings, image_shape):
+    """
+    Method to verify that our encoding satisfies kaggle's standards.
+    Specifically, for each encoding in encodings, checks that:
+        * pairs are sorted on start index
+        * all numbers are positive
+        * a given encoding doesn't overlap itself
+        * all pairs specify pixels within the image boundary.
+
+    It also checks that no encodings overlap each other.
+    """
+
+    mask_counts = np.zeros((len(encodings), np.prod(image_shape)))
+
+    for ind, enc in enumerate(encodings):
+        _check_encoding(enc, image_shape)
+        for pair in zip(enc[::2], enc[1::2]):
+            start, length = pair[0] - 1, pair[1]
+            mask_counts[ind, start:start+length] += 1
+
+    return mask_counts

@@ -228,7 +228,7 @@ class NucleiDataset(object):
         self.masks_ = np.zeros((num_images, *self.imsize))
         self.images_ = np.zeros((num_images, *self.imsize, self.num_channels))
 
-        for im_num, filename in tqdm(enumerate(self.data_ic_.files[:num_images]), unit='pair'):
+        for im_num, filename in tqdm(enumerate(self.data_ic_.files[:num_images]), unit="image"):
             img, mask, image_id, orig_shape = self._load_image(filename)
             self.images_[im_num] = img
             self.masks_[im_num] = mask

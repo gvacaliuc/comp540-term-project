@@ -13,7 +13,12 @@ class UNet(object):
     Binarizing UNet.
     """
 
-    def __init__(self, numchannels=2, steps_per_epoch=25, epochs=50, callbacks=[]):
+    def __init__(self, 
+            numchannels=2, 
+            steps_per_epoch=25, 
+            epochs=50, 
+            callbacks=[],
+            saved_weights="../weights/unet_weights.h5"):
         """
         Creates a UNet.
         """
@@ -22,8 +27,6 @@ class UNet(object):
         self.steps_per_epoch = steps_per_epoch
         self.epochs = epochs
         self.callbacks = callbacks
-
-
 
         input_layer = Input(shape=(256, 256, numchannels))
         c1 = Conv2D(filters=8, kernel_size=(3,3), activation='relu', padding='same')(input_layer)
@@ -46,11 +49,9 @@ class UNet(object):
         self.model.compile(optimizer=Adam(.01),
                            loss=self.dice_coef_loss,
                            metrics=[self.dice_coef, self.mean_iou, self.f1])
-        try:
-            self.model.load_weights("../weights/unet_weights.h5")
-            print("Loading saved weights...")
-        except:
-            print("Unable to load saved weights.")
+        if saved_weights:
+            self.model.load_weights(saved_weights)
+            print("Loaded saved weights...")
 
     def get_generator(self, x_train, y_train, batch_size):
         data_generator = ImageDataGenerator(
