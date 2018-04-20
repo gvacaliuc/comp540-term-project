@@ -25,7 +25,7 @@ def watershed_cc(pred, original, nms_min_distance=1, watershed_line=True,
              return_mask is True.
     """
     im = np.multiply(pred, original[:, :, 1])
-    dt = ndimage.distance_transform_edt(im)
+    dt = ndimage.distance_transform_edt(pred)
     peaks = feature.peak_local_max(
             dt,
             exclude_border = False,
@@ -41,7 +41,6 @@ def watershed_cc(pred, original, nms_min_distance=1, watershed_line=True,
     seg = segmentation.watershed(-dt, markers, mask=pred,
                                     watershed_line=True)
     return seg
-
 
 
 class NucleiSegmenter(BaseEstimator, TransformerMixin):
@@ -65,17 +64,17 @@ class NucleiSegmenter(BaseEstimator, TransformerMixin):
 
         self.set_params(**values)
 
-    def fit(self, images):
+    def fit(self, predictions, preprocessed):
         """
         Segments each thresholded image in the list of images.
         """
 
         self.components_ = []
-        for img in images:
-            if (len(np.unique(img)) != 2):
+        for mask, orig in zip(predictions, preprocessed):
+            if (len(np.unique(mask)) != 2):
                 raise ValueError("Images must be thresholded already.")
             self.components_.append(
-                    np.array(watershed_cc(postprocess(img),
+                    np.array(watershed_cc(postprocess(mask), orig,
                                  nms_min_distance=self.nms_min_distance,
                                  watershed_line=self.watershed_line)))
 

@@ -10,6 +10,8 @@ import pandas as pd
 from skimage.transform import resize
 from sklearn.base import BaseEstimator
 
+from tqdm import tqdm
+
 def rle_encode(mask, index_start=1):
     pixels = mask.flatten(order = 'F')
     # We need to allow for cases where there is a '1' at either end of the
@@ -39,8 +41,7 @@ def encode_mask(mask, return_string=True):
     """
     nuclei_masks = [(mask == ind).astype(mask.dtype) for ind in range(1, int(mask.max() + 1))]
     func = (lambda run: rle_to_string(run)) if return_string else (lambda run: run)
-    return [func(rle_encode(mask)) for mask in nuclei_masks]
-
+    return [func(rle_encode(mask)) for mask in nuclei_masks] 
 
 class RLEncoder(BaseEstimator):
     """
@@ -68,9 +69,13 @@ class RLEncoder(BaseEstimator):
             raise ValueError("""metadata and prediction list must be the same
                     length.""")
 
-        encodings = [encode_mask(
-            resize(mask_list, orig_shape, mode="constant", preserve_range=True))
-            for mask_list, orig_shape in zip(predictions, metadata.orig_shape)]
+        tups = zip(predictions, metadata.orig_shape)
+        encodings = []
+        for mask_list, orig_shape in tqdm(tups):
+            encodings.append(
+                    encode_mask(resize(
+                        mask_list, 
+                        orig_shape, mode="constant", preserve_range=True)))
 
         self.encoding_ = metadata.copy()
         self.encoding_["rle_mask_list"] = encodings
