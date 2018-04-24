@@ -536,6 +536,8 @@ to each pixel. For the purpose of our pipeline, the classes are
  a 256x256 resolution and pool down to a 32x32 image, halfing each image dimension
  with all 3 pooling layers. Other that this modification, our architecture is exactly
  that described in \href{https://arxiv.org/pdf/1505.04597.pdf}{The Original U-Net Proposition Paper}.
+ The Keras code to describe the first iteration of our U-Net architecture was taken from a
+ \href{https://www.kaggle.com/toregil/a-lung-u-net-in-keras}{Kaggle Kernel for CT Lung Data}.
 
  \subsubsection{Why This Architecture?}
  We attempted several other network architectures. Most notably, we tried VGG-segnet and Keras-FCN,
