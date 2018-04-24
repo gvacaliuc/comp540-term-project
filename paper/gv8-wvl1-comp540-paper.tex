@@ -399,7 +399,7 @@ information each feature encodes and the intuition behind including that informa
   \item Raw RGB Values:
   We first decided the include the RGB values themselves. Several other
   existing pipelines relied solely on the RGB values and performed quite well,
-  meaning the RGB values must encode valuable information, so we included it.
+  meaning the RGB values must encode valuable information, so we included them.
   \item  Bilateral Filter:
   A Bilateral Filter convolves the image with a weighted Gaussian kernal. This
   denoises the image, while still preserving the edges. We included it to
@@ -507,8 +507,52 @@ such that $\ell(w; (x_t, y_t)) \le \xi$ and $\xi \ge 0$.
 
 \subsection{UNet as a Learned Binarizer}
 
-Taking our predictions from our linear models and our 5 features, we complete
-our pipeline using a DNN functioning as a leared binarizer.
+Stacking our predictions from our linear models with our 5 features, we complete
+our pipeline using a DNN functioning as a learned binarizer called a ``U-Net"
+\footnote{\href{https://arxiv.org/pdf/1505.04597.pdf}{The Original U-Net Proposition Paper}}.
+The goal of the U-Net is to segment the image. That is, the U-Net learns a function
+$f : \mathbb{R} \mapsto \{0, 1\}$ for each pixel such that a class label is assigned
+to each pixel. For the purpose of our pipeline, the classes are $0$ if we predict a
+pixel is not part of a nucleus, or $1$ if we predict a pixel is part of a nucleus.
+
+ \subsubsection{General U-Net Architecture}
+ To segment the image, a U-Net "supplement[s] a usual contracting network by
+ successive layers, where pooling operators are replaced by upsampling
+ operators. In order to localize, high resolution features from the contracting
+ path are combined with the upsampled output" (Ronneberger et al. 2). Stacking the
+ high-resolution features with the unsampled output results in symmetry
+ between the expansive path and the contracting path, resulting in a u-shape
+ as seen in Figure \ref{fig:dsbowl18-grid}. For the image
+ borders, U-Net extrapolates missing information by mirroring the original
+ image accross the image borders.
+
+ \subsubsection{Our U-Net Architecture}
+ Our U-Net Architecture is very similar to the original U-Net Architecture. The only
+ modification we made was in the image dimensions. Rather than starting at a 572x572
+ resolution and pooling down to 32x32 images at the lowest resolution, we start at
+ a 256x256 resolution and pooling down to a 32x32 image, halfing each image dimension
+ with all 3 pooling layers. Other that this modification, our architecture is exactly
+ that described in \href{https://arxiv.org/pdf/1505.04597.pdf}{The Original U-Net Proposition Paper}.
+
+ \subsubsection{Why This Architecture?}
+ We attempted several other network architectures. Most notably, we tried VGG-segnet and Keras-FCN,
+ finding that our U-Net resulted in the highest pixel-F1 score. Furthermore, we attempted deeper
+ U-Nets, finding that further levels of abstraction did not provide significant pixel-wise F1
+ improvement after 50 epochs. We also attempted more shallow U-Nets, finding that decreasing the
+ number of layers lowered our pixel-wise F1 score a significant amount after 50 epochs.
+
+
+ \begin{appendixatend}
+     \subsection{U-Net Architecture}
+     \begin{figure}
+         \centering
+         \includegraphics[width=\textwidth]{./figs/unet_architecture.png}
+         \caption{The U-Net Architecture, as presented in  \href{https://arxiv.org/pdf/1505.04597.pdf}{The Original U-Net Proposition Paper} }
+         \label{fig:unet-architecture}
+     \end{figure}
+ \end{appendixatend}
+
+
 
 \subsection{Semantic Segmentation using Watershed}
 
@@ -525,6 +569,10 @@ our pipeline using a DNN functioning as a leared binarizer.
 \subsection{Semantic Segmentation using Watershed}
 
 \section{Discussion}
+
+\section{Mask RCNN}
+
+
 
 \section{Conclusion}
 
