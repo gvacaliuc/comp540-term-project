@@ -512,11 +512,14 @@ our pipeline using a DNN functioning as a learned binarizer called a ``U-Net"
 \footnote{\href{https://arxiv.org/pdf/1505.04597.pdf}{The Original U-Net Proposition Paper}}.
 The goal of the U-Net is to segment the image. That is, the U-Net learns a function
 $f : \mathbb{R} \mapsto \{0, 1\}$ for each pixel such that a class label is assigned
-to each pixel. For the purpose of our pipeline, the classes are $0$ if we predict a
-pixel is not part of a nucleus, or $1$ if we predict a pixel is part of a nucleus.
+to each pixel. For the purpose of our pipeline, the classes are
+\begin{enumerate}
+  \item $0$ if we predict a pixel is not part of a nucleus
+  \item $1$ if we predict a pixel is part of a nucleus
+\end{enumerate}
 
  \subsubsection{General U-Net Architecture}
- To segment the image, a U-Net "supplement[s] a usual contracting network by
+ To segment the image, a U-Net ``supplement[s] a usual contracting network by
  successive layers, where pooling operators are replaced by upsampling
  operators. In order to localize, high resolution features from the contracting
  path are combined with the upsampled output" (Ronneberger et al. 2). Stacking the
@@ -530,7 +533,7 @@ pixel is not part of a nucleus, or $1$ if we predict a pixel is part of a nucleu
  Our U-Net Architecture is very similar to the original U-Net Architecture. The only
  modification we made was in the image dimensions. Rather than starting at a 572x572
  resolution and pooling down to 32x32 images at the lowest resolution, we start at
- a 256x256 resolution and pooling down to a 32x32 image, halfing each image dimension
+ a 256x256 resolution and pool down to a 32x32 image, halfing each image dimension
  with all 3 pooling layers. Other that this modification, our architecture is exactly
  that described in \href{https://arxiv.org/pdf/1505.04597.pdf}{The Original U-Net Proposition Paper}.
 
