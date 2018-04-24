@@ -9,7 +9,10 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from .computer_vision import postprocess
 
 
-def watershed_cc(pred, original, nms_min_distance=1, watershed_line=True,
+def watershed_cc(pred,
+                 original,
+                 nms_min_distance=1,
+                 watershed_line=True,
                  return_mask=False):
     """
     Finds a set of components believed to be individual nuclei using the
@@ -28,19 +31,18 @@ def watershed_cc(pred, original, nms_min_distance=1, watershed_line=True,
     im = np.multiply(pred, original)
     dt = ndimage.distance_transform_edt(pred)
     peaks = feature.peak_local_max(
-            dt,
-            exclude_border = False,
-            indices = False,
-            min_distance = 5)
+        dt, exclude_border=False, indices=False, min_distance=5)
     local_maxes = list(zip(*np.where(peaks == True)))
     for coord1 in local_maxes.copy():
         for coord2 in local_maxes.copy():
-            if np.linalg.norm(np.array(coord1) - np.array(coord2)) < 30 and np.linalg.norm(im[coord1] - im[coord2]) < .1 and coord1 in local_maxes and not coord1 == coord2:
+            if np.linalg.norm(np.array(
+                    coord1) - np.array(coord2)) < 30 and np.linalg.norm(
+                        im[coord1] - im[coord2]
+                    ) < .1 and coord1 in local_maxes and not coord1 == coord2:
                 local_maxes.remove(coord2)
                 peaks[coord2] = 0
     markers = measure.label(peaks)
-    seg = segmentation.watershed(-dt, markers, mask=pred,
-                                    watershed_line=True)
+    seg = segmentation.watershed(-dt, markers, mask=pred, watershed_line=True)
     return seg.astype(np.int32)
 
 
@@ -87,9 +89,11 @@ class NucleiSegmenter(BaseEstimator, TransformerMixin):
             raise ValueError("Images must be thresholded already.")
 
         for ind, (mask, orig) in enumerate(zip(predictions, preprocessed)):
-            components[ind] = watershed_cc(mask, orig,
-                    nms_min_distance=self.nms_min_distance,
-                    watershed_line=self.watershed_line)
+            components[ind] = watershed_cc(
+                mask,
+                orig,
+                nms_min_distance=self.nms_min_distance,
+                watershed_line=self.watershed_line)
 
         self.components_ = components
 

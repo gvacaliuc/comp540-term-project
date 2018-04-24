@@ -15,14 +15,13 @@ from .computer_vision import postprocess, preprocess_image
 
 
 class DataReader(object):
-
     def __init__(self,
-            directory,
-            train=True,
-            imsize=(256, 256),
-            num_channels=3,
-            scale=True,
-            invert_white_images=True):
+                 directory,
+                 train=True,
+                 imsize=(256, 256),
+                 num_channels=3,
+                 scale=True,
+                 invert_white_images=True):
         """
         Class to read in our training and testing data, resize it, and store
         some metadata, including the image id and original size.  If we need to
@@ -44,7 +43,9 @@ class DataReader(object):
         self.masks = []
         self.metadata_columns = ["image_id", "orig_shape"]
 
-        def imloader(f): return self._imloader(f)
+        def imloader(f):
+            return self._imloader(f)
+
         self.data_ic = ImageCollection(data_pattern, load_func=imloader)
 
     def _imloader(self, filename):
@@ -95,8 +96,8 @@ class DataReader(object):
         if mask:
             return preprocess_image(img, self.imsize, False, False)
 
-        return preprocess_image(
-                img, self.imsize, self.scale, self.invert_white_images)
+        return preprocess_image(img, self.imsize, self.scale,
+                                self.invert_white_images)
 
     def get_metadata(self):
         """
@@ -106,9 +107,7 @@ class DataReader(object):
         if (len(self.image_metadata) == 0):
             raise Warning("Returning empty metadata.")
 
-        return pd.DataFrame(
-            self.image_metadata,
-            columns=self.metadata_columns)
+        return pd.DataFrame(self.image_metadata, columns=self.metadata_columns)
 
     def as_matrix(self, start=0, end=None, skip=1):
         """
@@ -135,14 +134,13 @@ class DataReader(object):
 
 
 class NucleiDataset(object):
-
     def __init__(self,
-            directory,
-            train=True,
-            imsize=(256, 256),
-            num_channels=3,
-            scale=True,
-            invert_white_images=True):
+                 directory,
+                 train=True,
+                 imsize=(256, 256),
+                 num_channels=3,
+                 scale=True,
+                 invert_white_images=True):
         """
         Class to read in our training and testing data, resize it, and store
         some metadata, including the image id and original size.  If we need to
@@ -178,7 +176,7 @@ class NucleiDataset(object):
             img = imread(filename)[:, :, :self.num_channels]
         except IndexError:
             tmp = imread(filename)
-            img = np.stack([tmp]*3).transpose(1, 2, 0)
+            img = np.stack([tmp] * 3).transpose(1, 2, 0)
         orig_shape = img.shape[:2]
         img = self._process(img)
 
@@ -200,7 +198,8 @@ class NucleiDataset(object):
 
         mask = np.zeros(self.imsize, dtype='uint8')
         for lbl, indiv_mask in enumerate(ic):
-            mask += ((1 + lbl) * self._process(indiv_mask, True).astype('uint8'))
+            mask += ((
+                1 + lbl) * self._process(indiv_mask, True).astype('uint8'))
 
         return mask
 
@@ -212,8 +211,8 @@ class NucleiDataset(object):
         if mask:
             return preprocess_image(img, self.imsize, False, False)
 
-        return preprocess_image(
-                img, self.imsize, self.scale, self.invert_white_images)
+        return preprocess_image(img, self.imsize, self.scale,
+                                self.invert_white_images)
 
     def load(self, max_size=None):
         """
@@ -227,7 +226,8 @@ class NucleiDataset(object):
         self.masks_ = np.zeros((num_images, *self.imsize))
         self.images_ = np.zeros((num_images, *self.imsize, self.num_channels))
 
-        for im_num, filename in tqdm(enumerate(self.data_ic_.files[:num_images]), unit="image"):
+        for im_num, filename in tqdm(
+                enumerate(self.data_ic_.files[:num_images]), unit="image"):
             img, mask, image_id, orig_shape = self._load_image(filename)
             self.images_[im_num] = img
             self.masks_[im_num] = mask
@@ -270,9 +270,8 @@ def get_model_results_global_thresh(model, data, labels):
     results = []
     columns = ["percent_thresh", "mask_thresh", "f1_score"]
 
-
     if len(data.shape) >= 4:
-        labels = labels.reshape((len(labels)*256*256))
+        labels = labels.reshape((len(labels) * 256 * 256))
     for percent_thresh in np.arange(.9, 1, 0.015):
         for mask_thresh in np.arange(.3, .7, 0.15):
             y_pred = model.predict(data)
@@ -282,16 +281,18 @@ def get_model_results_global_thresh(model, data, labels):
                                 for i in range(int(len(y_pred) / (256*256)))])
 
             else:
-                y_pred = np.array([postprocess(y_pred[i], percent=percent_thresh)
-                                for i in range(int(len(y_pred)))])
-            y_pred = y_pred.reshape((len(y_pred)*256*256))
-            results.append((percent_thresh,
-                            mask_thresh,
-                            f1_score(labels > mask_thresh,
-                                     y_pred > 0)))
-
+                y_pred = np.array([
+                    postprocess(y_pred[i], percent=percent_thresh)
+                    for i in range(int(len(y_pred)))
+                ])
+            y_pred = y_pred.reshape((len(y_pred) * 256 * 256))
+            results.append((percent_thresh, mask_thresh,
+                            f1_score(labels > mask_thresh, y_pred > 0)))
 
     return pd.DataFrame(results, columns=columns)
 
+
 def f1(predictions, labels):
-    return np.mean(f1_score((np.array(labels).astype('uint8') > 0).flatten(), (np.array(predictions).astype('uint8') > .5).flatten()))
+    return np.mean(
+        f1_score((np.array(labels).astype('uint8') > 0).flatten(),
+                 (np.array(predictions).astype('uint8') > .5).flatten()))

@@ -16,6 +16,7 @@ from .models import MiniBatchRegressor
 
 IMG_MAX = 255.0
 
+
 def otsu(image):
     """
     performs otsu's binarization on an image
@@ -55,8 +56,8 @@ def postprocess(X, min_area=0):
     """
     otsu_predictions = otsu(X)
     labeled, num_labels = label(otsu_predictions)
-    flattened_labels = labeled.reshape((256*256, 1))
-    flattened_otsu_predictions = otsu_predictions.reshape((256*256, 1))
+    flattened_labels = labeled.reshape((256 * 256, 1))
+    flattened_otsu_predictions = otsu_predictions.reshape((256 * 256, 1))
     for label_num in range(0, num_labels + 4):
         indices = np.where(flattened_labels == label_num)[0]
         component = flattened_otsu_predictions[indices]
@@ -67,8 +68,10 @@ def postprocess(X, min_area=0):
     return binary_fill_holes(flattened_otsu_predictions.reshape((256, 256)))
 
 
-def preprocess_image(
-        img, imsize = (256, 256), scale = True, invert_white_images=True):
+def preprocess_image(img,
+                     imsize=(256, 256),
+                     scale=True,
+                     invert_white_images=True):
     """
     Processes an image per our specifications.
     """
@@ -78,15 +81,13 @@ def preprocess_image(
     img = resize(img, imsize, mode="constant", preserve_range=True)
     img /= IMG_MAX if scale else 1
 
-    img = ((1 - img) 
-            if invert_white_images and ( img.mean() > WHITE_THRESHOLD ) 
-            else img)
+    img = ((1 - img)
+           if invert_white_images and (img.mean() > WHITE_THRESHOLD) else img)
 
     return img
 
 
-def match_color_with_source_dist(
-        target_img, Cs, mu_s, mode='pca', eps=1e-5):
+def match_color_with_source_dist(target_img, Cs, mu_s, mode='pca', eps=1e-5):
     '''
     Matches the colour distribution of the target image to that of the source image
     using a linear transform.
@@ -95,7 +96,7 @@ def match_color_with_source_dist(
     '''
     mu_t = target_img.mean(0).mean(0)
     t = target_img - mu_t
-    t = t.transpose(2,0,1).reshape(3,-1)
+    t = t.transpose(2, 0, 1).reshape(3, -1)
     Ct = t.dot(t.T) / t.shape[1] + eps * np.eye(t.shape[0])
     if mode == 'chol':
         chol_t = np.linalg.cholesky(Ct)
@@ -114,7 +115,8 @@ def match_color_with_source_dist(
         eva_QtCsQt, eve_QtCsQt = np.linalg.eigh(Qt_Cs_Qt)
         QtCsQt = eve_QtCsQt.dot(np.sqrt(np.diag(eva_QtCsQt))).dot(eve_QtCsQt.T)
         ts = np.linalg.inv(Qt).dot(QtCsQt).dot(np.linalg.inv(Qt)).dot(t)
-    matched_img = ts.reshape(*target_img.transpose(2,0,1).shape).transpose(1,2,0)
+    matched_img = ts.reshape(*target_img.transpose(2, 0, 1).shape).transpose(
+        1, 2, 0)
     matched_img += mu_s
     matched_img = np.clip(matched_img, 0, 1)
     return matched_img
@@ -154,21 +156,22 @@ class ColorMatcher(BaseEstimator, TransformerMixin):
         """
 
         #   Threshold style_images immediately to increase contrast:
-        style_images = (style_images > self.threshold).astype(style_images.dtype)
+        style_images = (style_images > self.threshold).astype(
+            style_images.dtype)
 
         _, _, _, channels = style_images.shape
         #   Take mean over height / width
         per_image_channel_mean = np.mean(
-                style_images, axis=(1, 2), keepdims=True)
+            style_images, axis=(1, 2), keepdims=True)
         #   Store per channel mean
         self.mu_source_ = np.mean(per_image_channel_mean, axis=0)
 
         centered = style_images - per_image_channel_mean
         flattened = centered.reshape((-1, channels))
 
-        self.cov_source_ = (flattened.T.dot(flattened)
-                            / np.prod(style_images.shape[:3])
-                            + self.eps * np.eye(channels))
+        self.cov_source_ = (
+            flattened.T.dot(flattened) / np.prod(style_images.shape[:3]) +
+            self.eps * np.eye(channels))
 
         #   Handle Cholesky
         self.cholesky_ = np.linalg.cholesky(self.cov_source_)
@@ -208,12 +211,10 @@ class ColorMatcher(BaseEstimator, TransformerMixin):
         convert the rgb to greyscale.
         """
 
-        greyscale = np.rollaxis(np.stack([rgb2gray(image)]*3), 0, 3)
+        greyscale = np.rollaxis(np.stack([rgb2gray(image)] * 3), 0, 3)
 
         return match_color_with_source_dist(
-                greyscale, self.cov_source_,
-                self.mu_source_, self.mode, self.eps)
-
+            greyscale, self.cov_source_, self.mu_source_, self.mode, self.eps)
 
 
 def preprocess(x_test):
@@ -221,29 +222,33 @@ def preprocess(x_test):
     style_image = np.load('../data/style_image.npz')["style_image"]
     x_test_preprocessed = cm.fit_transform(style_image, x_test)
     transformer = BasisTransformer()
-    x_test_transformed = transformer.fit_transform(np.expand_dims(x_test_preprocessed, axis = 3))
+    x_test_transformed = transformer.fit_transform(
+        np.expand_dims(x_test_preprocessed, axis=3))
     x_test_flat = np.nan_to_num(x_test_transformed).reshape(
-            (-1, x_test_transformed.shape[-1]))
+        (-1, x_test_transformed.shape[-1]))
     weights = np.load('../weights/linear_pipeline_regressor_weights.npz')
     sgd_regressor = MiniBatchRegressor(
-        regressor=SGDRegressor(penalty='elasticnet', l1_ratio=0.11, max_iter = 5, tol = None),
+        regressor=SGDRegressor(
+            penalty='elasticnet', l1_ratio=0.11, max_iter=5, tol=None),
         batch_size=1000,
-        num_iters=50000
-    )
+        num_iters=50000)
     #this is so we can call predict
     sgd_regressor.fit(np.zeros((1, 8)), np.zeros((1, 1)).ravel())
     sgd_regressor.regressor.coef_ = weights["sgd"]
     pa_regressor = MiniBatchRegressor(
-        regressor=PassiveAggressiveRegressor(C = .2, max_iter = 5, tol = None),
+        regressor=PassiveAggressiveRegressor(C=.2, max_iter=5, tol=None),
         batch_size=1000,
-        num_iters=1000
-    )
+        num_iters=1000)
     #this is so we can call predict
     pa_regressor.fit(np.zeros((1, 8)), np.zeros((1, 1)).ravel())
     pa_regressor.regressor.coef_ = weights["pa"]
-    x_test_extended = np.zeros((len(x_test), 256, 256, x_test_transformed.shape[3] + 2))
-    x_test_extended = np.zeros((*x_test_transformed.shape[:3], x_test_transformed.shape[3] + 2))
+    x_test_extended = np.zeros((len(x_test), 256, 256,
+                                x_test_transformed.shape[3] + 2))
+    x_test_extended = np.zeros((*x_test_transformed.shape[:3],
+                                x_test_transformed.shape[3] + 2))
     x_test_extended[:, :, :, :x_test_transformed.shape[3]] = x_test_transformed
-    x_test_extended[:, :, :, x_test_transformed.shape[3]] = sgd_regressor.predict(x_test_transformed)
-    x_test_extended[:, :, :, x_test_transformed.shape[3] + 1] = pa_regressor.predict(x_test_transformed)
+    x_test_extended[:, :, :, x_test_transformed.shape[
+        3]] = sgd_regressor.predict(x_test_transformed)
+    x_test_extended[:, :, :, x_test_transformed.shape[3] +
+                    1] = pa_regressor.predict(x_test_transformed)
     return x_test_extended

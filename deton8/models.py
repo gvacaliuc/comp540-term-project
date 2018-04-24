@@ -39,10 +39,10 @@ class MiniBatchRegressor(BaseEstimator, RegressorMixin):
     """
 
     def __init__(self,
-            regressor = SGDRegressor(),
-            batch_size = 400,
-            num_iters = 400,
-            verbose = False):
+                 regressor=SGDRegressor(),
+                 batch_size=400,
+                 num_iters=400,
+                 verbose=False):
         """
         Instantiates MiniBatchImageRegressor with the given parameters.
         """
@@ -65,7 +65,7 @@ class MiniBatchRegressor(BaseEstimator, RegressorMixin):
         """
 
         x_flat = flatten_data(data)
-        y_flat = labels.reshape((x_flat.shape[0],))
+        y_flat = labels.reshape((x_flat.shape[0], ))
 
         self.regr_ = self.regressor
 
@@ -94,19 +94,18 @@ class MiniBatchRegressor(BaseEstimator, RegressorMixin):
         return self.regr_.predict(data).reshape((*output_shape))
 
 
-
 class UNet(object):
     """
     Class to encapsulate the model building and training of our 
     Binarizing UNet.
     """
 
-    def __init__(self, 
-            numchannels=2, 
-            steps_per_epoch=25, 
-            epochs=50, 
-            callbacks=[],
-            saved_weights="../weights/unet_weights.h5"):
+    def __init__(self,
+                 numchannels=2,
+                 steps_per_epoch=25,
+                 epochs=50,
+                 callbacks=[],
+                 saved_weights="../weights/unet_weights.h5"):
         """
         Creates a UNet.
         """
@@ -117,41 +116,59 @@ class UNet(object):
         self.callbacks = callbacks
 
         input_layer = Input(shape=(256, 256, numchannels))
-        c1 = Conv2D(filters=8, kernel_size=(3,3), activation='relu', padding='same')(input_layer)
-        l = MaxPool2D(strides=(2,2))(c1)
-        c2 = Conv2D(filters=16, kernel_size=(3,3), activation='relu', padding='same')(l)
-        l = MaxPool2D(strides=(2,2))(c2)
-        c3 = Conv2D(filters=32, kernel_size=(3,3), activation='relu', padding='same')(l)
-        l = MaxPool2D(strides=(2,2))(c3)
-        c4 = Conv2D(filters=32, kernel_size=(1,1), activation='relu', padding='same')(l)
-        l = concatenate([UpSampling2D(size=(2,2))(c4), c3], axis=-1)
-        l = Conv2D(filters=32, kernel_size=(2,2), activation='relu', padding='same')(l)
-        l = concatenate([UpSampling2D(size=(2,2))(l), c2], axis=-1)
-        l = Conv2D(filters=24, kernel_size=(2,2), activation='relu', padding='same')(l)
-        l = concatenate([UpSampling2D(size=(2,2))(l), c1], axis=-1)
-        l = Conv2D(filters=16, kernel_size=(2,2), activation='relu', padding='same')(l)
-        l = Conv2D(filters=64, kernel_size=(1,1), activation='relu')(l)
+        c1 = Conv2D(
+            filters=8, kernel_size=(3, 3), activation='relu',
+            padding='same')(input_layer)
+        l = MaxPool2D(strides=(2, 2))(c1)
+        c2 = Conv2D(
+            filters=16, kernel_size=(3, 3), activation='relu',
+            padding='same')(l)
+        l = MaxPool2D(strides=(2, 2))(c2)
+        c3 = Conv2D(
+            filters=32, kernel_size=(3, 3), activation='relu',
+            padding='same')(l)
+        l = MaxPool2D(strides=(2, 2))(c3)
+        c4 = Conv2D(
+            filters=32, kernel_size=(1, 1), activation='relu',
+            padding='same')(l)
+        l = concatenate([UpSampling2D(size=(2, 2))(c4), c3], axis=-1)
+        l = Conv2D(
+            filters=32, kernel_size=(2, 2), activation='relu',
+            padding='same')(l)
+        l = concatenate([UpSampling2D(size=(2, 2))(l), c2], axis=-1)
+        l = Conv2D(
+            filters=24, kernel_size=(2, 2), activation='relu',
+            padding='same')(l)
+        l = concatenate([UpSampling2D(size=(2, 2))(l), c1], axis=-1)
+        l = Conv2D(
+            filters=16, kernel_size=(2, 2), activation='relu',
+            padding='same')(l)
+        l = Conv2D(filters=64, kernel_size=(1, 1), activation='relu')(l)
         l = Dropout(0.5)(l)
-        output_layer = Conv2D(filters=1, kernel_size=(1,1), activation='sigmoid')(l)
+        output_layer = Conv2D(
+            filters=1, kernel_size=(1, 1), activation='sigmoid')(l)
         self.model = Model(input_layer, output_layer)
-        self.model.compile(optimizer=Adam(.01),
-                           loss=self.dice_coef_loss,
-                           metrics=[self.dice_coef, self.mean_iou, self.f1])
+        self.model.compile(
+            optimizer=Adam(.01),
+            loss=self.dice_coef_loss,
+            metrics=[self.dice_coef, self.mean_iou, self.f1])
         if saved_weights:
             self.model.load_weights(saved_weights)
             print("Loaded saved weights...")
 
     def get_generator(self, x_train, y_train, batch_size):
         data_generator = ImageDataGenerator(
-                horizontal_flip=True,
-                vertical_flip=True,
-                zoom_range=0.2,
-                shear_range=0.2).flow(x_train, x_train, batch_size, seed=42)
+            horizontal_flip=True,
+            vertical_flip=True,
+            zoom_range=0.2,
+            shear_range=0.2).flow(
+                x_train, x_train, batch_size, seed=42)
         mask_generator = ImageDataGenerator(
-                horizontal_flip=True,
-                vertical_flip=True,
-                zoom_range=0.2,
-                shear_range=0.2).flow(y_train, y_train, batch_size, seed=42)
+            horizontal_flip=True,
+            vertical_flip=True,
+            zoom_range=0.2,
+            shear_range=0.2).flow(
+                y_train, y_train, batch_size, seed=42)
         while True:
             x_batch, _ = data_generator.next()
             y_batch, _ = mask_generator.next()
@@ -160,7 +177,7 @@ class UNet(object):
     def dice_coef(self, y_true, y_pred):
         y_true_f = K.flatten(y_true)
         y_pred_f = K.flatten(y_pred)
-        
+
         tp = K.sum(y_true_f * y_pred_f)
         fp = K.sum((1 - y_true_f) * y_pred_f)
         p = K.sum(y_true_f)
@@ -175,7 +192,7 @@ class UNet(object):
         return score
 
     def dice_coef_loss(self, y_true, y_pred):
-        return -1*self.dice_coef(y_true, y_pred)
+        return -1 * self.dice_coef(y_true, y_pred)
 
     def f1(self, y_true, y_pred):
         y_true_f = K.flatten(y_true)
@@ -192,19 +209,15 @@ class UNet(object):
 
     def fit(self, x_train, y_train, x_val, y_val):
         self.model.fit_generator(
-            self.get_generator(x_train, np.expand_dims(y_train, axis = 3), 8),
-            steps_per_epoch = self.steps_per_epoch,
-            validation_data = (x_val, np.expand_dims(y_val, axis = 3)),
+            self.get_generator(x_train, np.expand_dims(y_train, axis=3), 8),
+            steps_per_epoch=self.steps_per_epoch,
+            validation_data=(x_val, np.expand_dims(y_val, axis=3)),
             epochs=self.epochs,
             callbacks=self.callbacks,
             verbose=True)
 
     def predict(self, x_test):
         return self.model.predict(x_test)
-
-
-
-
 
 
 def pipeline(directory, train=True, max_size=None):
@@ -214,7 +227,8 @@ def pipeline(directory, train=True, max_size=None):
     x_preprocessed = preprocess(x_raw)
     unet = UNet()
     x_predictions = (unet.predict(x_preprocessed) > 0).astype("uint8")
-    x_postprocessed = np.array([postprocess(im, min_area = 15) for im in x_predictions])
+    x_postprocessed = np.array(
+        [postprocess(im, min_area=15) for im in x_predictions])
     return x_postprocessed, metadata
 
 
@@ -226,8 +240,8 @@ def LinearPipeline(memory=mkdtemp()):
 
     return Pipeline(
         [("flattener", FunctionTransformer(flatten_data, validate=False)),
-         ("whitener",
-          PCA(n_components=1, svd_solver='randomized', whiten=True)),
+         ("whitener", PCA(
+             n_components=1, svd_solver='randomized', whiten=True)),
          ("minmaxscaler", MinMaxScaler()),
          ("expander", FunctionTransformer(expand_data, validate=False)),
          ("basis_transformer", BasisTransformer()),
@@ -241,6 +255,7 @@ def save(pipeline, path):
     """
 
     joblib.dump(pipeline, path)
+
 
 def load(path):
     """

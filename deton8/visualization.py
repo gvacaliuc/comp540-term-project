@@ -23,9 +23,15 @@ def plot_prediction(model, features, mask):
     plt.imshow(mask)
     plt.title("true mask")
 
+
 def plot_segmentation(features, pred, mask):
 
-    seg = watershed_cc(pred, original=features, nms_min_distance=7, watershed_line=True, return_mask=True)
+    seg = watershed_cc(
+        pred,
+        original=features,
+        nms_min_distance=7,
+        watershed_line=True,
+        return_mask=True)
     plt.figure()
     plt.subplot(131)
     plt.imshow(features[:, :, :3])
@@ -38,18 +44,17 @@ def plot_segmentation(features, pred, mask):
     plt.title("true mask")
 
 
-def plot_color_transfer_results(
-        trainImages,
-        style_indices,
-        grid_size=(5, 5),
-        fig_size=(10, 6)):
+def plot_color_transfer_results(trainImages,
+                                style_indices,
+                                grid_size=(5, 5),
+                                fig_size=(10, 6)):
     """
     plots the results from our color transfer code.
     """
 
     num_images = np.prod(grid_size)
     idx = np.random.choice(
-            np.arange(len(trainImages)), size=num_images, replace=False)
+        np.arange(len(trainImages)), size=num_images, replace=False)
     style_images = trainImages[style_indices]
     content_images = trainImages[idx]
 
@@ -63,7 +68,8 @@ def plot_color_transfer_results(
     gs = GridSpec(*expanded_grid_size)
 
     left_ims = content_images.reshape((*grid_size, *content_images.shape[1:]))
-    right_ims = transformed_images.reshape((*grid_size, *transformed_images.shape[1:]))
+    right_ims = transformed_images.reshape((*grid_size,
+                                            *transformed_images.shape[1:]))
 
     for i in range(grid_size[0]):
         for j in range(grid_size[1]):
@@ -74,16 +80,15 @@ def plot_color_transfer_results(
             right_ax.imshow(right_ims[i, j])
             right_ax.axis('off')
 
-
     plt.suptitle("Left: Original Images, Right: Images after Color Transfer")
     plt.show()
 
-def plot_grid(
-        images, 
-        title="Example images from the 2018 DS Bowl.", 
-        gridsize = (5,10),
-        cmap = 'Blues',
-        figsize = (10, 6)):
+
+def plot_grid(images,
+              title="Example images from the 2018 DS Bowl.",
+              gridsize=(5, 10),
+              cmap='Blues',
+              figsize=(10, 6)):
     """
     Plots a grid of images without axes.  images[i] should return the ith
     image.

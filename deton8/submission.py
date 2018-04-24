@@ -22,9 +22,9 @@ def rle_encode(mask, index_start=1):
     :return: a numpy array holding our run length encoding.
     """
 
-    pixels = mask.flatten(order = 'F')
+    pixels = mask.flatten(order='F')
     # We need to allow for cases where there is a '1' at either end of the
-    # sequence.  We do this by padding with a zero at each end. 
+    # sequence.  We do this by padding with a zero at each end.
     pixel_padded = np.zeros([len(pixels) + 2], dtype=pixels.dtype)
     pixel_padded[1:-1] = pixels
     pixels = pixel_padded
@@ -50,8 +50,12 @@ def encode_nuclei_mask(mask, return_string=True):
     every pixel in our mask.
     """
 
-    return [rle_encode((mask == ind).astype(mask.dtype))
-            for ind in range(1, mask.max() + 1)] 
+    return [
+        rle_encode((mask == ind).astype(mask.dtype))
+        for ind in range(1,
+                         mask.max() + 1)
+    ]
+
 
 class RLEncoder(BaseEstimator):
     """
@@ -85,15 +89,15 @@ class RLEncoder(BaseEstimator):
         encodings = []
         for mask, orig_shape, image_id in tqdm(tups):
             resized_mask = resize(
-                    mask, orig_shape, 
-                    preserve_range=True, mode="constant").astype(mask.dtype)
+                mask, orig_shape, preserve_range=True, mode="constant").astype(
+                    mask.dtype)
             encoding_list = encode_nuclei_mask(resized_mask)
             check_encodings(encoding_list, orig_shape)
             encodings.extend([(image_id, " ".join(enc.astype(str)))
                               for enc in encoding_list])
 
         self.encoding_ = pd.DataFrame(
-                encodings, columns=["ImageId", "EncodedPixels"])
+            encodings, columns=["ImageId", "EncodedPixels"])
 
         return self
 
@@ -126,8 +130,8 @@ def _check_encoding(encoding, image_shape):
         raise ValueError("Encoding isn't sorted.")
 
     #   That they're positive
-    assert(np.all(start_inds > 0))
-    assert(np.all(lengths > 0))
+    assert (np.all(start_inds > 0))
+    assert (np.all(lengths > 0))
     if not (np.all(encoding > 0)):
         raise ValueError("Non-Positive values in encoding.")
 
@@ -137,7 +141,7 @@ def _check_encoding(encoding, image_shape):
         raise ValueError("Overlapping or contiguous encoding.")
 
     #   That it doesn't extend past the end
-    if not ((end_inds[-1] - 1 ) <= np.prod(image_shape)):
+    if not ((end_inds[-1] - 1) <= np.prod(image_shape)):
         raise ValueError("Encoding out of image bounds.")
 
 
@@ -159,7 +163,7 @@ def check_encodings(encodings, image_shape):
         _check_encoding(enc, image_shape)
         for pair in zip(enc[::2], enc[1::2]):
             start, length = pair[0] - 1, pair[1]
-            mask_counts[ind, start:start+length] += 1
+            mask_counts[ind, start:start + length] += 1
 
     if np.max(mask_counts) > 1:
         raise ValueError("Some encodings overlap.")

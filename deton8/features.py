@@ -11,13 +11,12 @@ from tqdm import tqdm
 
 
 class BasisTransformer(BaseEstimator, TransformerMixin):
-
     def __init__(self,
                  bilateral_d=2,
                  bilateral_sigma_color=75,
                  bilateral_sigma_space=75,
                  equalize_hist_clip_limit=0.03,
-                 dialation_kernel=disk(radius = 3),
+                 dialation_kernel=disk(radius=3),
                  dialation_iters=1):
         """
         :param bilateral_d: Diameter of each pixel neighborhood that is used
@@ -62,7 +61,6 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
         self.features_ = []
         for i in tqdm(range(len(images)), unit="pair"):
             self.features_.append(self._basis_map(images[i]))
-
 
         self.features_ = np.stack(self.features_)
 
@@ -115,11 +113,9 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
         mean = np.mean(image)
         std = np.std(image)
 
-        bilateral = cv2.bilateralFilter(
-                uint8_image,
-                self.bilateral_d,
-                self.bilateral_sigma_color,
-                self.bilateral_sigma_space) / IMG_MAX
+        bilateral = cv2.bilateralFilter(uint8_image, self.bilateral_d,
+                                        self.bilateral_sigma_color,
+                                        self.bilateral_sigma_space) / IMG_MAX
         p2, p98 = np.percentile(image, (50, 99))
         img_rescale = exposure.rescale_intensity(image, in_range=(p2, p98))
 
@@ -127,12 +123,10 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
             equalize_hist = exposure.equalize_adapthist(
-                    image,
-                    clip_limit=self.equalize_hist_clip_limit)
+                image, clip_limit=self.equalize_hist_clip_limit)
 
-        dilate = cv2.dilate(image,
-                            self.dialation_kernel,
-                            iterations=self.dialation_iters)
+        dilate = cv2.dilate(
+            image, self.dialation_kernel, iterations=self.dialation_iters)
 
         # First dimension are original color space.
         new_image[:, :, 0] = image
