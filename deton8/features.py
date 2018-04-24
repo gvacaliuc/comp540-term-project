@@ -1,14 +1,13 @@
-import warnings
 import inspect
+import warnings
 
 import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 from skimage import exposure
-from tqdm import tqdm
 from skimage.morphology import disk
-
 from sklearn.base import BaseEstimator, TransformerMixin
-import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 
 class BasisTransformer(BaseEstimator, TransformerMixin):

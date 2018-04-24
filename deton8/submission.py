@@ -11,8 +11,8 @@ import numpy as np
 import pandas as pd
 from skimage.transform import resize
 from sklearn.base import BaseEstimator
-
 from tqdm import tqdm
+
 
 def rle_encode(mask, index_start=1):
     """
@@ -32,6 +32,10 @@ def rle_encode(mask, index_start=1):
     rle[1::2] = rle[1::2] - rle[::2]
     rle[::2] += index_start
 
+    if not len(rle):
+        print("empty rle")
+        print(mask)
+
     return rle
 
 
@@ -45,8 +49,9 @@ def encode_nuclei_mask(mask, return_string=True):
     :return: a list of numpy arrays with the run-length encodings of
     every pixel in our mask.
     """
-    return [(mask == ind).astype(mask.dtype) 
-            for ind in range(1, int(mask.max() + 1))] 
+
+    return [rle_encode((mask == ind).astype(mask.dtype))
+            for ind in range(1, mask.max() + 1)] 
 
 class RLEncoder(BaseEstimator):
     """
@@ -70,18 +75,21 @@ class RLEncoder(BaseEstimator):
         :type predictions: numpy.ndarray
         """
 
-        if (len(metadata) != len(predictions)):
+        preds = predictions.astype(np.int16)
+
+        if (len(metadata) != len(preds)):
             raise ValueError("""metadata and prediction list must be the same
                     length.""")
 
-        tups = zip(predictions, metadata.orig_shape, metadata.image_id)
+        tups = zip(preds, metadata.orig_shape, metadata.image_id)
         encodings = []
         for mask, orig_shape, image_id in tqdm(tups):
             resized_mask = resize(
-                    mask, orig_shape, preserve_range=True, mode="constant")
+                    mask, orig_shape, 
+                    preserve_range=True, mode="constant").astype(mask.dtype)
             encoding_list = encode_nuclei_mask(resized_mask)
             check_encodings(encoding_list, orig_shape)
-            encodings.extend([(image_id, enc) 
+            encodings.extend([(image_id, " ".join(enc.astype(str)))
                               for enc in encoding_list])
 
         self.encoding_ = pd.DataFrame(
@@ -106,6 +114,9 @@ def _check_encoding(encoding, image_shape):
     lengths = encoding[1::2]
 
     end_inds = start_inds + lengths
+
+    if not len(encoding):
+        raise ValueError("Empty encoding.")
 
     if not (len(start_inds) == len(lengths)):
         raise ValueError("Odd length encoding.")

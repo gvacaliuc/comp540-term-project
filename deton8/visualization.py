@@ -1,11 +1,12 @@
 from itertools import product
 
 import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec
 import numpy as np
+from matplotlib.gridspec import GridSpec
 
 from .components import watershed_cc
 from .computer_vision import ColorMatcher
+
 
 def plot_prediction(model, features, mask):
 

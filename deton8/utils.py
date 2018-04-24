@@ -1,18 +1,17 @@
 import os
 import sys
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from skimage.io import ImageCollection, imread
 from skimage.transform import resize
 from sklearn.metrics import (confusion_matrix, f1_score, precision_score,
                              recall_score)
+from tqdm import tqdm
 
 from .analytical import *
-from .computer_vision import preprocess_image
-from .computer_vision import postprocess
-import matplotlib.pyplot as plt
-from tqdm import tqdm
+from .computer_vision import postprocess, preprocess_image
 
 
 class DataReader(object):

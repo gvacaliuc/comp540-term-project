@@ -1,11 +1,12 @@
 import inspect
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy import ndimage
 from skimage import feature, measure, morphology, segmentation
 from sklearn.base import BaseEstimator, TransformerMixin
+
 from .computer_vision import postprocess
-import matplotlib.pyplot as plt
 
 
 def watershed_cc(pred, original, nms_min_distance=1, watershed_line=True,
@@ -24,7 +25,7 @@ def watershed_cc(pred, original, nms_min_distance=1, watershed_line=True,
              as a full mask w/ unique integers indicating components if
              return_mask is True.
     """
-    im = np.multiply(pred, original[:, :, 1])
+    im = np.multiply(pred, original)
     dt = ndimage.distance_transform_edt(pred)
     peaks = feature.peak_local_max(
             dt,
@@ -40,7 +41,7 @@ def watershed_cc(pred, original, nms_min_distance=1, watershed_line=True,
     markers = measure.label(peaks)
     seg = segmentation.watershed(-dt, markers, mask=pred,
                                     watershed_line=True)
-    return seg
+    return seg.astype(np.int32)
 
 
 class NucleiSegmenter(BaseEstimator, TransformerMixin):
@@ -67,22 +68,36 @@ class NucleiSegmenter(BaseEstimator, TransformerMixin):
     def fit(self, predictions, preprocessed):
         """
         Segments each thresholded image in the list of images.
+
+        :param predictions: numpy array of shape N x X x Y, holding our nuclei
+        prediction for each pixel
+        :param preprocessed: numpy array of shape N x X x Y, holding the
+        preprocessed images.
+
+        :return: numpy array of shape N x X x Y, however each pixel in each
+        image will be set to a discrete value 0, ..., n.  0 indicates
+        background.
         """
 
-        self.components_ = []
-        for mask, orig in zip(predictions, preprocessed):
-            if (len(np.unique(mask)) != 2):
-                raise ValueError("Images must be thresholded already.")
-            self.components_.append(
-                    np.array(watershed_cc(postprocess(mask), orig,
-                                 nms_min_distance=self.nms_min_distance,
-                                 watershed_line=self.watershed_line)))
+        components = np.zeros_like(predictions, dtype=np.int32)
+        if not predictions.shape == preprocessed.shape:
+            raise ValueError("Arrays must be of the same shape.")
+
+        if len(np.unique(predictions)) != 2:
+            raise ValueError("Images must be thresholded already.")
+
+        for ind, (mask, orig) in enumerate(zip(predictions, preprocessed)):
+            components[ind] = watershed_cc(mask, orig,
+                    nms_min_distance=self.nms_min_distance,
+                    watershed_line=self.watershed_line)
+
+        self.components_ = components
 
         return self
 
-    def fit_transform(self, images):
+    def fit_transform(self, predictions, preprocessed):
         """
         Returns the fitted segmentations.
         """
 
-        return self.fit(images).components_
+        return self.fit(predictions, preprocessed).components_

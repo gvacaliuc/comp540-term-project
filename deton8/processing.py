@@ -8,6 +8,11 @@ from skimage.color import rgb2gray
 from skimage.filters import threshold_otsu
 from skimage.transform import resize
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.linear_model import PassiveAggressiveRegressor, SGDRegressor
+
+from .analytical import BasisTransformer
+from .computer_vision import ColorMatcher
+from .models import MiniBatchRegressor
 
 IMG_MAX = 255.0
 
@@ -208,3 +213,37 @@ class ColorMatcher(BaseEstimator, TransformerMixin):
         return match_color_with_source_dist(
                 greyscale, self.cov_source_,
                 self.mu_source_, self.mode, self.eps)
+
+
+
+def preprocess(x_test):
+    cm = ColorMatcher()
+    style_image = np.load('../data/style_image.npz')["style_image"]
+    x_test_preprocessed = cm.fit_transform(style_image, x_test)
+    transformer = BasisTransformer()
+    x_test_transformed = transformer.fit_transform(np.expand_dims(x_test_preprocessed, axis = 3))
+    x_test_flat = np.nan_to_num(x_test_transformed).reshape(
+            (-1, x_test_transformed.shape[-1]))
+    weights = np.load('../weights/linear_pipeline_regressor_weights.npz')
+    sgd_regressor = MiniBatchRegressor(
+        regressor=SGDRegressor(penalty='elasticnet', l1_ratio=0.11, max_iter = 5, tol = None),
+        batch_size=1000,
+        num_iters=50000
+    )
+    #this is so we can call predict
+    sgd_regressor.fit(np.zeros((1, 8)), np.zeros((1, 1)).ravel())
+    sgd_regressor.regressor.coef_ = weights["sgd"]
+    pa_regressor = MiniBatchRegressor(
+        regressor=PassiveAggressiveRegressor(C = .2, max_iter = 5, tol = None),
+        batch_size=1000,
+        num_iters=1000
+    )
+    #this is so we can call predict
+    pa_regressor.fit(np.zeros((1, 8)), np.zeros((1, 1)).ravel())
+    pa_regressor.regressor.coef_ = weights["pa"]
+    x_test_extended = np.zeros((len(x_test), 256, 256, x_test_transformed.shape[3] + 2))
+    x_test_extended = np.zeros((*x_test_transformed.shape[:3], x_test_transformed.shape[3] + 2))
+    x_test_extended[:, :, :, :x_test_transformed.shape[3]] = x_test_transformed
+    x_test_extended[:, :, :, x_test_transformed.shape[3]] = sgd_regressor.predict(x_test_transformed)
+    x_test_extended[:, :, :, x_test_transformed.shape[3] + 1] = pa_regressor.predict(x_test_transformed)
+    return x_test_extended
