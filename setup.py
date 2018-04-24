@@ -14,4 +14,7 @@ setup(name='deton8',
       license='MIT',
       packages=['deton8'],
       python_requires='>=3',
-      zip_safe=False)
+      zip_safe=False,
+      entry_points={
+          'console_scripts': ['deton8=deton8.main:main']
+          })
