@@ -6,7 +6,7 @@ from scipy import ndimage
 from skimage import feature, measure, morphology, segmentation
 from sklearn.base import BaseEstimator, TransformerMixin
 
-from .computer_vision import postprocess
+from .processing import postprocess
 
 
 class NucleiSegmenter(BaseEstimator, TransformerMixin):
