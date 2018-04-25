@@ -584,6 +584,12 @@ Our feature representation for each modality can be seen in Figure
 
 \subsection{Linear Model for Individual Pixel Probabilities}
 
+After performing a grid search over our linear model hyperparameters, we result
+in the following two sets of Area Under the Receiver Operating Characteristic
+Curve (ROC AUC) scores, which can be seen in Tables \ref{tab:sgd-gs} and
+\ref{tab:pa-gs}.  The two tables correspond to the \texttt{SGDRegressor} and
+the \texttt{PassiveAggressiveRegressor}.
+
 \subsection{UNet as a Learned Binarizer}
 
 \subsection{Semantic Segmentation using Watershed}
