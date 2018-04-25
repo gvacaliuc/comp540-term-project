@@ -577,6 +577,18 @@ to each pixel. For the purpose of our pipeline, the classes are
 
 \section{Mask RCNN}
 
+On top of the outline previously described, we also trained a Mask RCNN based off
+of the \newline\href{Matterport Implementation}{https://github.com/matterport/Mask\_RCNN}.
+After modifying the code to train on the provided training set and to give predictions
+for the stage 1 test set, we recieved an AP score of .477 \footnote{This
+score of .477 is based off of our local implementation of AP using the Stage 1
+data for scoring.}. However, we felt as if the purpose of the project is to
+learn about machine learning, and we did not believe that we learned much by using
+someone else's implementation of an architecture we did not fully understand.
+So, even though Mask RCNN outperformed our pipeline described above, we did not
+consider the Mask RCNN our work, nor did we believe that it taught us much of
+anything. Hence our rationale for ultimately submitting the pipeline described
+above.
 
 
 \section{Conclusion}
