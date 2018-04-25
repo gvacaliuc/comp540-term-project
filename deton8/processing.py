@@ -1,15 +1,20 @@
 import inspect
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.ndimage.measurements import label
+from scipy.ndimage.morphology import binary_fill_holes
 from skimage.color import rgb2gray
 from skimage.filters import threshold_otsu
 from skimage.transform import resize
-from sklearn.base import TransformerMixin, BaseEstimator
-import matplotlib.pyplot as plt
-from scipy.ndimage.morphology import binary_fill_holes
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.decomposition import PCA
+from sklearn.linear_model import PassiveAggressiveRegressor, SGDRegressor
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import FunctionTransformer, MinMaxScaler
 
 IMG_MAX = 255.0
+
 
 def otsu(image):
     """
@@ -50,8 +55,8 @@ def postprocess(X, min_area=0):
     """
     otsu_predictions = otsu(X)
     labeled, num_labels = label(otsu_predictions)
-    flattened_labels = labeled.reshape((256*256, 1))
-    flattened_otsu_predictions = otsu_predictions.reshape((256*256, 1))
+    flattened_labels = labeled.reshape((256 * 256, 1))
+    flattened_otsu_predictions = otsu_predictions.reshape((256 * 256, 1))
     for label_num in range(0, num_labels + 4):
         indices = np.where(flattened_labels == label_num)[0]
         component = flattened_otsu_predictions[indices]
@@ -62,8 +67,10 @@ def postprocess(X, min_area=0):
     return binary_fill_holes(flattened_otsu_predictions.reshape((256, 256)))
 
 
-def preprocess_image(
-        img, imsize = (256, 256), scale = True, invert_white_images=True):
+def preprocess_image(img,
+                     imsize=(256, 256),
+                     scale=True,
+                     invert_white_images=True):
     """
     Processes an image per our specifications.
     """
@@ -73,15 +80,13 @@ def preprocess_image(
     img = resize(img, imsize, mode="constant", preserve_range=True)
     img /= IMG_MAX if scale else 1
 
-    img = ((1 - img) 
-            if invert_white_images and ( img.mean() > WHITE_THRESHOLD ) 
-            else img)
+    img = ((1 - img)
+           if invert_white_images and (img.mean() > WHITE_THRESHOLD) else img)
 
     return img
 
 
-def match_color_with_source_dist(
-        target_img, Cs, mu_s, mode='pca', eps=1e-5):
+def match_color_with_source_dist(target_img, Cs, mu_s, mode='pca', eps=1e-5):
     '''
     Matches the colour distribution of the target image to that of the source image
     using a linear transform.
@@ -90,7 +95,7 @@ def match_color_with_source_dist(
     '''
     mu_t = target_img.mean(0).mean(0)
     t = target_img - mu_t
-    t = t.transpose(2,0,1).reshape(3,-1)
+    t = t.transpose(2, 0, 1).reshape(3, -1)
     Ct = t.dot(t.T) / t.shape[1] + eps * np.eye(t.shape[0])
     if mode == 'chol':
         chol_t = np.linalg.cholesky(Ct)
@@ -109,7 +114,8 @@ def match_color_with_source_dist(
         eva_QtCsQt, eve_QtCsQt = np.linalg.eigh(Qt_Cs_Qt)
         QtCsQt = eve_QtCsQt.dot(np.sqrt(np.diag(eva_QtCsQt))).dot(eve_QtCsQt.T)
         ts = np.linalg.inv(Qt).dot(QtCsQt).dot(np.linalg.inv(Qt)).dot(t)
-    matched_img = ts.reshape(*target_img.transpose(2,0,1).shape).transpose(1,2,0)
+    matched_img = ts.reshape(*target_img.transpose(2, 0, 1).shape).transpose(
+        1, 2, 0)
     matched_img += mu_s
     matched_img = np.clip(matched_img, 0, 1)
     return matched_img
@@ -149,21 +155,22 @@ class ColorMatcher(BaseEstimator, TransformerMixin):
         """
 
         #   Threshold style_images immediately to increase contrast:
-        style_images = (style_images > self.threshold).astype(style_images.dtype)
+        style_images = (style_images > self.threshold).astype(
+            style_images.dtype)
 
         _, _, _, channels = style_images.shape
         #   Take mean over height / width
         per_image_channel_mean = np.mean(
-                style_images, axis=(1, 2), keepdims=True)
+            style_images, axis=(1, 2), keepdims=True)
         #   Store per channel mean
         self.mu_source_ = np.mean(per_image_channel_mean, axis=0)
 
         centered = style_images - per_image_channel_mean
         flattened = centered.reshape((-1, channels))
 
-        self.cov_source_ = (flattened.T.dot(flattened)
-                            / np.prod(style_images.shape[:3])
-                            + self.eps * np.eye(channels))
+        self.cov_source_ = (
+            flattened.T.dot(flattened) / np.prod(style_images.shape[:3]) +
+            self.eps * np.eye(channels))
 
         #   Handle Cholesky
         self.cholesky_ = np.linalg.cholesky(self.cov_source_)
@@ -203,8 +210,54 @@ class ColorMatcher(BaseEstimator, TransformerMixin):
         convert the rgb to greyscale.
         """
 
-        greyscale = np.rollaxis(np.stack([rgb2gray(image)]*3), 0, 3)
+        greyscale = np.rollaxis(np.stack([rgb2gray(image)] * 3), 0, 3)
 
         return match_color_with_source_dist(
-                greyscale, self.cov_source_,
-                self.mu_source_, self.mode, self.eps)
+            greyscale, self.cov_source_, self.mu_source_, self.mode, self.eps)
+
+
+def flatten_data(X):
+    """
+    Flattens the data in X.
+
+    :param X: ndarray of shape (N, X, Y, C)
+
+    :return reshaped: ndarray of shape (N * X * Y, C)
+    """
+
+    return X.reshape((-1, X.shape[-1]))
+
+
+def expand_data(X, orig_shape=(256, 256)):
+    """
+    Restructures the data in X as a set of images.
+
+    :param X: ndarray of shape (N * X * Y, C)
+
+    :return reshaped: ndarray of shape (N, X, Y, C)
+    """
+
+    return X.reshape((-1, *orig_shape, X.shape[-1]))
+
+
+def scale_data(X, low=0, high=1):
+    """
+    Scales each image in X to a new range, between low and high.
+    """
+
+    xmin = np.amin(X, axis=(1, 2), keepdims=True)
+    xmax = np.amax(X, axis=(1, 2), keepdims=True)
+
+    xstd = (X - xmin) / (xmax - xmin)
+
+    return xstd * (high - low) + low
+
+
+def Preprocesser():
+    return Pipeline(
+        [("flattener", FunctionTransformer(flatten_data, validate=False)),
+         ("whitener", PCA(
+             n_components=1, svd_solver='randomized', whiten=True)),
+         ("expander", FunctionTransformer(expand_data, validate=False)),
+         ("scaler", FunctionTransformer(scale_data, validate=False))],
+        memory=None)

@@ -5,43 +5,57 @@ Contains methods to process nuclei and individual nucleus predictions by
 performing the requisite RLE encoding.
 """
 
+import warnings
+
 import numpy as np
 import pandas as pd
 from skimage.transform import resize
 from sklearn.base import BaseEstimator
-
 from tqdm import tqdm
 
+
 def rle_encode(mask, index_start=1):
-    pixels = mask.flatten(order = 'F')
+    """
+    Run Length Encodes a single, binary mask.
+
+    :param mask: X x Y binary array
+    :return: a numpy array holding our run length encoding.
+    """
+
+    pixels = mask.flatten(order='F')
     # We need to allow for cases where there is a '1' at either end of the
-    # sequence.  We do this by padding with a zero at each end. 
+    # sequence.  We do this by padding with a zero at each end.
     pixel_padded = np.zeros([len(pixels) + 2], dtype=pixels.dtype)
     pixel_padded[1:-1] = pixels
     pixels = pixel_padded
     rle = np.where(pixels[1:] != pixels[:-1])[0]
     rle[1::2] = rle[1::2] - rle[::2]
     rle[::2] += index_start
+
+    if not len(rle):
+        print("empty rle")
+        print(mask)
+
     return rle
 
 
-def rle_to_string(runs):
-    return ' '.join(str(x) for x in runs)
-
-
-def encode_mask(mask, return_string=True):
+def encode_nuclei_mask(mask, return_string=True):
     """
     Performs the run length encoding for a given mask.  The mask is expected
     to be a single entry of the input to RLEncoder.fit.
 
     :param mask: an image of shape X x Y.  Discrete Valued.
 
-    :return: a list of strings corresponding to the run length encoding of this
-             mask.
+    :return: a list of numpy arrays with the run-length encodings of
+    every pixel in our mask.
     """
-    nuclei_masks = [(mask == ind).astype(mask.dtype) for ind in range(1, int(mask.max() + 1))]
-    func = (lambda run: rle_to_string(run)) if return_string else (lambda run: run)
-    return [func(rle_encode(mask)) for mask in nuclei_masks] 
+
+    return [
+        rle_encode((mask == ind).astype(mask.dtype))
+        for ind in range(1,
+                         mask.max() + 1)
+    ]
+
 
 class RLEncoder(BaseEstimator):
     """
@@ -65,20 +79,25 @@ class RLEncoder(BaseEstimator):
         :type predictions: numpy.ndarray
         """
 
-        if (len(metadata) != len(predictions)):
+        preds = predictions.astype(np.int16)
+
+        if (len(metadata) != len(preds)):
             raise ValueError("""metadata and prediction list must be the same
                     length.""")
 
-        tups = zip(predictions, metadata.orig_shape)
+        tups = zip(preds, metadata.orig_shape, metadata.image_id)
         encodings = []
-        for mask_list, orig_shape in tqdm(tups):
-            encodings.append(
-                    encode_mask(resize(
-                        mask_list, 
-                        orig_shape, mode="constant", preserve_range=True)))
+        for mask, orig_shape, image_id in tqdm(tups):
+            resized_mask = resize(
+                mask, orig_shape, preserve_range=True, mode="constant").astype(
+                    mask.dtype)
+            encoding_list = encode_nuclei_mask(resized_mask)
+            check_encodings(encoding_list, orig_shape)
+            encodings.extend([(image_id, " ".join(enc.astype(str)))
+                              for enc in encoding_list])
 
-        self.encoding_ = metadata.copy()
-        self.encoding_["rle_mask_list"] = encodings
+        self.encoding_ = pd.DataFrame(
+            encodings, columns=["ImageId", "EncodedPixels"])
 
         return self
 
@@ -87,24 +106,7 @@ class RLEncoder(BaseEstimator):
         Fits the estimator and returns the encoding_ as expected by Kaggle.
         """
 
-        df = self.fit(metadata, predictions).encoding_
-
-        items_as_cols = df.apply(lambda x: pd.Series(x['rle_mask_list']),
-                                 axis=1)
-
-        # Keep original df index as a column so it's retained after melt
-        items_as_cols['orig_index'] = items_as_cols.index
-
-        melted_items = pd.melt(items_as_cols, id_vars='orig_index',
-                               var_name='sample_num', value_name='rle_mask')
-        melted_items.set_index('orig_index', inplace=True)
-
-        df = df.merge(melted_items, left_index=True, right_index=True).dropna()
-        df = df[["image_id", "rle_mask"]]
-        df = df.rename(columns={"image_id": "ImageId",
-                                "rle_mask": "EncodedPixels"})
-
-        return df
+        return self.fit(metadata, predictions).encoding_
 
 
 def _check_encoding(encoding, image_shape):
@@ -117,17 +119,30 @@ def _check_encoding(encoding, image_shape):
 
     end_inds = start_inds + lengths
 
-    assert(len(start_inds) == len(lengths))
+    if not len(encoding):
+        raise ValueError("Empty encoding.")
+
+    if not (len(start_inds) == len(lengths)):
+        raise ValueError("Odd length encoding.")
+
     #   That they're sorted
-    assert(np.all(np.argsort(start_inds) == np.arange(len(start_inds))))
+    if not (np.all(np.argsort(start_inds) == np.arange(len(start_inds)))):
+        raise ValueError("Encoding isn't sorted.")
+
     #   That they're positive
-    assert(np.all(start_inds > 0))
-    assert(np.all(lengths > 0))
+    assert (np.all(start_inds > 0))
+    assert (np.all(lengths > 0))
+    if not (np.all(encoding > 0)):
+        raise ValueError("Non-Positive values in encoding.")
+
     #   That they don't overlap, and have at least 1 pixel in between
     #   (otherwise they'd be joined)
-    assert(np.all(end_inds[:-1] < start_inds[1:]))
+    if not (np.all(end_inds[:-1] < start_inds[1:])):
+        raise ValueError("Overlapping or contiguous encoding.")
+
     #   That it doesn't extend past the end
-    assert((end_inds[-1] - 1 ) <= np.prod(image_shape))
+    if not ((end_inds[-1] - 1) <= np.prod(image_shape)):
+        raise ValueError("Encoding out of image bounds.")
 
 
 def check_encodings(encodings, image_shape):
@@ -148,6 +163,9 @@ def check_encodings(encodings, image_shape):
         _check_encoding(enc, image_shape)
         for pair in zip(enc[::2], enc[1::2]):
             start, length = pair[0] - 1, pair[1]
-            mask_counts[ind, start:start+length] += 1
+            mask_counts[ind, start:start + length] += 1
+
+    if np.max(mask_counts) > 1:
+        raise ValueError("Some encodings overlap.")
 
     return mask_counts
