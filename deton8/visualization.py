@@ -5,7 +5,7 @@ import numpy as np
 from matplotlib.gridspec import GridSpec
 
 from .components import watershed_cc
-from .computer_vision import ColorMatcher
+from .processing import ColorMatcher
 
 
 def plot_prediction(model, features, mask):
