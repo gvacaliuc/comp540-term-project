@@ -503,6 +503,13 @@ after 50 epochs. We also attempted more shallow U-Nets, finding that
 decreasing the number of layers lowered our pixel-wise F1 score a significant
 amount after 50 epochs.
 
+\subsubsection{ Data Augmentation }
+As prior mentioned, we only had 670 training images and 67 validation images provided by Kaggle.
+Thus, to create more data, we used a Keras data augmentation generator to "create" more data
+and control overfitting. In the data augmentation generator, we allowed for horizontal and
+vertical flipping, zooming, as well as shearing. We fed this data generator into the UNet, which
+improved our validation pixel F1 score from $.85$ to $.89$.
+
 \begin{appendixatend}
     \subsection{U-Net Architecture}
     \begin{figure}
@@ -516,14 +523,14 @@ amount after 50 epochs.
 \subsection{Semantic Segmentation using Watershed}
 
 At this point in our pipeline, we have binary masks for each nuclei image.
-From here, we need to develop individual masks for each nucleus in an image.  
-To accomplish this, we use the watershed algorithm to help us segment each 
+From here, we need to develop individual masks for each nucleus in an image.
+To accomplish this, we use the watershed algorithm to help us segment each
 nucleus.  Given a binary mask, we perform this process to segment our nuclei:
 \begin{enumerate}
     \item perform a euclidean distance transform
 
         The distance transform calculates the distance to the nearest 0 value
-        in $\ell_2$ pixel distances.  This has the effect of producing high 
+        in $\ell_2$ pixel distances.  This has the effect of producing high
         transform values for pixels in the center of a nucleus.
 
     \item local max calculation and non-maximum supression
@@ -552,8 +559,8 @@ how we decide to keep or reject a local max.
 
 \subsection{Preprocessing \& Data Whitening}
 
-After applying our preprocessing steps, we result in high-quality grayscale 
-images.  A comparison between raw modalities and our processed images is 
+After applying our preprocessing steps, we result in high-quality grayscale
+images.  A comparison between raw modalities and our processed images is
 presented in Figure \ref{fig:processing-results}.  In our PCA projection,
 we consistently explain 97\% of the original channel variance in the first
 principal component of our data.
@@ -596,20 +603,64 @@ the \texttt{PassiveAggressiveRegressor}.
 
 \section{Discussion}
 
-\subsection{Mask RCNN}
+\subsection{ Dataset Insights }
+Our various experiments revealed that the data is much noiser than we thought.
+We thought that feeding the UNet as much information as possible would allow
+the UNet to model this background noise. However, we believe that the distribution
+of noise is different depending on the data modality, and was thus difficult for the
+UNet to learn. Thus, we also learned that although DNN's are excellent at
+providing abstract representations of the data, they cannot learn multiple noise
+distributions given such a small dataset. To fix this problem, we would've liked to
+preprocess the data in a way such that all modalities are unified in both foreground
+and background noise, or to use unsupervised learning to cluster the data based on
+their underlying distribution and to then predict each new image based on a process
+specialized to its underlying distribution.
 
-On top of the outline previously described, we also trained a Mask RCNN based
-off of the \newline\href{https://github.com/matterport/Mask\_RCNN}{Matterport
-Implementation}.  After modifying the
-code to train on the provided training set and to give predictions for the
-stage 1 test set, we recieved an AP score of .477 \footnote{This score of .477
-is based off of our local implementation of AP using the Stage 1 data for
-scoring.}. However, we felt as if the purpose of the project is to learn about
-machine learning, and we did not believe that we learned much by using someone
-else's implementation of an architecture we did not fully understand.  So, even
-though Mask RCNN outperformed our pipeline described above, we did not consider
-the Mask RCNN our work, nor did we believe that it taught us much of anything.
-Hence our rationale for ultimately submitting the pipeline described above.
+\subsection{ Pipeline Selection }
+
+We ultimately developed two pipelines: the pipeline described above, and a Mask RCNN
+based off of the \href{Matterport Implementation}{https://github.com/matterport/Mask\_RCNN}.
+For the Mask RCNN, we simply modified the code to train on the provided nucleus training set
+and to give predictions for the stage 1 test set. After doing so, we recieved an AP score of
+$.477$ \footnote{This score of .477 is based off of our local implementation of AP using the
+Stage 1 data for scoring.}. However, we felt as if the purpose of the project is to
+learn about machine learning, and we did not believe that we learned much by using
+someone else's implementation of an architecture we did not fully understand.
+So, even though Mask RCNN outperformed our pipeline described above, we did not
+consider the Mask RCNN our work, nor did we believe that it taught us much of
+anything. Hence our rationale for ultimately submitting the pipeline described
+above.
+
+As for how we went about selecting the specific steps in our pipeline, we thoughts
+of this problem as two-stage: predicting if a pixel is part of a nucleus
+(i.e. binarization), then predicting which pixel it is part of (i.e. segmentation).
+For the binarization step, we saw that UNet was successful, so we decided to feed
+in as much information as possible to our UNet. For segmentation, watershed seemed
+reasonable, but also oversegmented very frequently, so we modified it to include a
+non-maximum suppression step. To unify the modalities, we preprocessed the data by
+whitening. And to get rid of holes in the image, we performed a
+\texttt{$binary\_fill\_holes$} operation.
+
+\subsection{ Lessons on Large-Scale Prediction Problems }
+
+We learned several lesson from this project:
+
+\begin{enumerate}
+  \item In a pipeline, each step needs to perform well. It is very difficult to
+  make up for a bad stage in a pipeline, and it is very important to identify
+  which stages perform poorly and to spend time and effort improving those stages.
+  \item Implementing an evaluation metric for the entire pipeline early on is
+  extremely important. We had two major stages in our pipeline: binarization
+  and segmentation. We knew that the binarization step performed very well from
+  validation pixel F1 scores. From qualitative assessment, we assumed that the
+  segmentation step was performing well. However, when we finally implemented a
+  submission method that allowed us to evaluate our pipeline, we learned that it
+  did not perform nearly as well as expected. Via process of elimination, we
+  learned that it was the segmentation step in our pipeline that was performing
+  poorly, but only after it was too late to try anything radically new.
+  \item On a related note, every stage in a pipeline should be evaluated
+  quantitatively, not just qualitatively
+\end{enumerate}
 
 
 \section{Conclusion}
