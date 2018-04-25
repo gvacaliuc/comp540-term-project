@@ -130,7 +130,13 @@
 \maketitle
 
 \begin{abstract}
-    \blindtext
+    We present a unique pipeline to semantically segment individual nuclei in
+    microscopic cell scans.  The pipeline consists of aggressive preprocessing
+    to unify images from various microscope types, followed by a binarization
+    of pixels represented by several layers of linear and non-linear features.  
+    Using predicted binary masks for the images, we employ the watershed
+    segmentation algorithm to identify unique nuclei.  Our methods result in
+    an average precision of \textbf{0.316} on the Stage 1 test set.
 \end{abstract}
 
 \newpage
