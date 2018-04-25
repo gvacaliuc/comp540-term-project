@@ -42,7 +42,7 @@ parser.add_argument(
     help="If 'submit' is called, the submission csv is saved here.")
 
 
-def train(config):
+def run(config, train=True):
     """
     Trains our pipeline according to the configuration provided.
     """
@@ -50,13 +50,10 @@ def train(config):
     train_dir = config["train_dir"]
     val_dir = config["val_dir"]
 
-    num_train = 50
-    num_val = 20
-
     print("Reading in data...")
 
-    train_data = NucleiDataset(train_dir).load(num_train)
-    val_data = NucleiDataset(val_dir).load(num_val)
+    train_data = NucleiDataset(train_dir).load()
+    val_data = NucleiDataset(val_dir).load()
 
     x_train = train_data.images_
     y_train = train_data.masks_  # value in 0, 1, ..., n
@@ -152,10 +149,6 @@ def train(config):
     train_components = segmenter.fit_transform(x_train_pred, x_train_pre)
     val_components = segmenter.fit_transform(x_val_pred, x_val_pre)
 
-    #postprocess(im, min_area=15) for im in x_predictions
-
-    #   Print out score for both train and validation
-
 
 def get_default_config():
     return {
@@ -202,10 +195,10 @@ def main():
             config_file.write(
                 yaml.dump(get_default_config(), default_flow_style=False))
 
-    elif parsed.command == "train":
-        config = get_default_config()
-        if parsed.config_file:
-            with open(parsed.config_file, "r") as config_file:
-                config.update(yaml.load(config_file.read()))
-
-        train(config)
+    config = get_default_config()
+    if parsed.config_file:
+        with open(parsed.config_file, "r") as config_file:
+            config.update(yaml.load(config_file.read()))
+            
+    train = parsed.command == "train"
+    run(config, train=train)
