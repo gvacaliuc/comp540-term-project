@@ -24,10 +24,10 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, MinMaxScaler
 from tqdm import tqdm
 
+from . import metrics
 from .features import BasisTransformer
 from .processing import postprocess
 from .utils import NucleiDataset, expand_data, flatten_data
-from . import metrics
 
 
 class MiniBatchRegressor(BaseEstimator, RegressorMixin):
@@ -119,7 +119,7 @@ class UNet(object):
         Builds the keras model.
         """
 
-        input_layer = Input(shape=(256, 256, numchannels))
+        input_layer = Input(shape=(256, 256, self.numchannels))
         c1 = Conv2D(
             filters=8, kernel_size=(3, 3), activation='relu',
             padding='same')(input_layer)
@@ -153,11 +153,9 @@ class UNet(object):
             filters=1, kernel_size=(1, 1), activation='sigmoid')(l)
         self.model = Model(input_layer, output_layer)
         self.model.compile(
-            optimizer=Adam(.01),
-            loss=metrics.dice_coef_loss,
-            metrics=[metrics.dice_coef, metrics.mean_iou, metrics.f1])
+            optimizer=Adam(.01), loss=metrics.dice_coef_loss, metrics=['acc'])
 
-    def load_weights(filename):
+    def load_weights(self, filename):
         """
         Loads weights from a saved file.
         """

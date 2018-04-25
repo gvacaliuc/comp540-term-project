@@ -3,6 +3,8 @@ from keras import backend as K
 
 
 def dice_coef(y_true, y_pred):
+    print(y_true)
+    print(y_pred)
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
 
@@ -36,4 +38,5 @@ def f1(y_true, y_pred):
     prec = tp / (tp + fp)
     recall = tp / (tp + fn)
 
-    return 2 * (prec * recall) / (prec + recall)
+    f1_score = 2 * (prec * recall) / (prec + recall)
+    return f1_score

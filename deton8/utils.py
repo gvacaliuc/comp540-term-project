@@ -1,3 +1,4 @@
+import inspect
 import os
 import sys
 
@@ -11,7 +12,6 @@ from sklearn.metrics import (confusion_matrix, f1_score, precision_score,
 from tqdm import tqdm
 
 from .processing import postprocess, preprocess_image
-import inspect
 
 
 class NucleiDataset(object):

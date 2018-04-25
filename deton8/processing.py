@@ -8,10 +8,10 @@ from skimage.color import rgb2gray
 from skimage.filters import threshold_otsu
 from skimage.transform import resize
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.decomposition import PCA
 from sklearn.linear_model import PassiveAggressiveRegressor, SGDRegressor
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import FunctionTransformer, MinMaxScaler
-from sklearn.decomposition import PCA
 
 IMG_MAX = 255.0
 
@@ -240,11 +240,24 @@ def expand_data(X, orig_shape=(256, 256)):
     return X.reshape((-1, *orig_shape, X.shape[-1]))
 
 
+def scale_data(X, low=0, high=1):
+    """
+    Scales each image in X to a new range, between low and high.
+    """
+
+    xmin = np.amin(X, axis=(1, 2), keepdims=True)
+    xmax = np.amax(X, axis=(1, 2), keepdims=True)
+
+    xstd = (X - xmin) / (xmax - xmin)
+
+    return xstd * (high - low) + low
+
+
 def Preprocesser():
     return Pipeline(
         [("flattener", FunctionTransformer(flatten_data, validate=False)),
          ("whitener", PCA(
              n_components=1, svd_solver='randomized', whiten=True)),
-         ("minmaxscaler", MinMaxScaler()),
-         ("expander", FunctionTransformer(expand_data, validate=False))],
+         ("expander", FunctionTransformer(expand_data, validate=False)),
+         ("scaler", FunctionTransformer(scale_data, validate=False))],
         memory=None)

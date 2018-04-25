@@ -16,6 +16,7 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
                  bilateral_d=2,
                  bilateral_sigma_color=75,
                  bilateral_sigma_space=75,
+                 rescale_intensity_range=(50, 99),
                  equalize_hist_clip_limit=0.03,
                  dialation_kernel=disk(radius=3),
                  dialation_iters=1):
@@ -117,12 +118,13 @@ class BasisTransformer(BaseEstimator, TransformerMixin):
         bilateral = cv2.bilateralFilter(uint8_image, self.bilateral_d,
                                         self.bilateral_sigma_color,
                                         self.bilateral_sigma_space) / IMG_MAX
-        p2, p98 = np.percentile(image, (50, 99))
-        img_rescale = exposure.rescale_intensity(image, in_range=(p2, p98))
+        low, high = np.percentile(image, self.rescale_intensity_range)
 
-        # TODO: This raisies a warning about precision loss, but idk why.
+        # NOTE: This raises a warning about precision loss and invalid div. values
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
+            img_rescale = exposure.rescale_intensity(
+                image, in_range=(low, high))
             equalize_hist = exposure.equalize_adapthist(
                 image, clip_limit=self.equalize_hist_clip_limit)
 
@@ -162,7 +164,7 @@ def extend_features(x_feat, sgd, pa):
     x_sgd = sgd.predict(x_feat)[:, :, :, np.newaxis]
     x_pa = pa.predict(x_feat)[:, :, :, np.newaxis]
 
-    x_extended = np.stack([x_feat, x_sgd, x_pa], axis=3)
+    x_extended = np.concatenate([x_feat, x_sgd, x_pa], axis=3)
 
     return x_extended
 
