@@ -607,6 +607,7 @@ predictions along the ground truth masks in Figure \ref{fig:lin-mod-out}.
     \caption{Results from a grid search over $\ell_1$ ratio and regularization
     strength $\alpha$, the hyperparameters for our elastic net regularization.}
     \label{tab:sgd-gs}
+    \vspace{0.25cm}
     \input{./sgd-gridsearch-table.tex}
 \end{table}
 
@@ -615,6 +616,7 @@ predictions along the ground truth masks in Figure \ref{fig:lin-mod-out}.
     \caption{Results from a grid search over regularization strength C, the
     hyperparameter for our PA regressor.}
     \label{tab:pa-gs}
+    \vspace{0.25cm}
     \input{./pa-gridsearch-table.tex}
 \end{table}
 
@@ -626,14 +628,18 @@ predictions along the ground truth masks in Figure \ref{fig:lin-mod-out}.
     \caption{Comparison between the SGDRegressor outputs (top), the
     PassiveAggressiveRegressor outputs (middle), and the ground truth binary
     labels (bottom).}
-    \label{fig:processing-results}
+    \label{fig:lin-mod-out}
 \end{figure}
 
 \subsection{UNet as a Learned Binarizer}
 
 We trained our UNet for 50 epochs on a large portion of the stage 1 training
 set, evaluating it on a small fraction that was set aside.  Our trained model
-consistently scores a \textbf{pixelwise F1 score of 0.89}.
+consistently scores a \textbf{pixelwise F1 score of 0.89} on our validation
+sets.  Binary pixel predictions for each modality are shown in Figure
+\ref{fig:unet-output}, alongside the true masks.  Our prediction is OK for the
+first two modalities, however we generally predict far too large of areas in
+third modality.
 
 \begin{figure}[H]
     \centering
@@ -646,6 +652,20 @@ consistently scores a \textbf{pixelwise F1 score of 0.89}.
 
 \subsection{Semantic Segmentation using Watershed}
 
+Refer to Figure \ref{fig:segmentation} for our final segmentation results.  
+These images were segmented from our UNet binary output using the techniques
+described in our methods section.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{./figs/segmentation.png}
+    \includegraphics[width=0.85\textwidth]{./figs/ground-truth.png}
+    \caption{Comparison between our predictions (top) and the ground truth
+    labels (bottom).}
+    \label{fig:unet-output}
+\end{figure}
+
+
 \section{Discussion}
 
 \subsection{ Dataset Insights }
@@ -656,12 +676,7 @@ the U-Net to model this background noise. However, we believe that the
 distribution of noise is different depending on the data modality, and was thus
 difficult for the U-Net to learn. Thus, we also learned that although DNN's are
 excellent at providing abstract representations of the data, they cannot learn
-multiple noise distributions given such a small dataset. To fix this problem,
-we would've liked to preprocess the data in a way such that all modalities are
-unified in both foreground and background noise, or to use unsupervised
-learning to cluster the data based on their underlying distribution and to then
-predict each new image based on a process specialized to its underlying
-distribution.
+multiple noise distributions given such a small dataset.
 
 \subsection{ Pipeline Selection }
 
