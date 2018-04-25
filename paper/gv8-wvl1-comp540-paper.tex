@@ -639,7 +639,11 @@ consistently scores a \textbf{pixelwise F1 score of 0.89} on our validation
 sets.  Binary pixel predictions for each modality are shown in Figure
 \ref{fig:unet-output}, alongside the true masks.  Our prediction is OK for the
 first two modalities, however we generally predict far too large of areas in
-third modality.
+third modality.  We've also included a plot of our training and validation
+pixelwise F1 and Dice Coefficient scores in Figure \ref{fig:unet-history}.
+Note that both the training and validation metrics seem to fluctuate
+stochastically around the same mean at convergence, indicating that we are not
+overfitting our training data.
 
 \begin{figure}[H]
     \centering
@@ -648,6 +652,13 @@ third modality.
     \caption{Comparison between the UNet outputs (top) and the ground truth
     binary labels (bottom).}
     \label{fig:unet-output}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{./figs/unet-score-history.png}
+    \caption{Training history of our binarizing UNet.}
+    \label{fig:unet-history}
 \end{figure}
 
 \subsection{Semantic Segmentation using Watershed}
@@ -662,9 +673,8 @@ described in our methods section.
     \includegraphics[width=0.85\textwidth]{./figs/ground-truth.png}
     \caption{Comparison between our predictions (top) and the ground truth
     labels (bottom).}
-    \label{fig:unet-output}
+    \label{fig:segmentation}
 \end{figure}
-
 
 \section{Discussion}
 
@@ -756,10 +766,13 @@ To remedy this, we copied the
 implementation of the competition metric, and we use this to evaluate our
 pipeline after the Stage 1 answers were released. Approximately one week ago,
 we were finally able to submit without error. However, by that time, we had
-already solidified our entire pipeline and our predictions thus have not
-changed.  Thus, we do not believe that our Kaggle submission history conveys
-very much information, as it is comprised merely of a series of errors,
-followed by our final score.
+already solidified our entire pipeline.
+
+After finally figuring out how to submit to Kaggle, we received a score of
+\textbf{0.064} on the stage 2 test set.  We believe that the second test set
+contained images that were more like the images that our pipeline struggles
+with, than the easier,``black background and white foreground'' images seen in 
+the train set.
 
 \newpage
 
