@@ -504,12 +504,14 @@ after 50 epochs. We also attempted more shallow U-Nets, finding that
 decreasing the number of layers lowered our pixel-wise F1 score a significant
 amount after 50 epochs.
 
-\subsubsection{ Data Augmentation }
+\subsubsection{ Data Augmentation and Overfit Reduction }
 As prior mentioned, we only had 670 training images and 67 validation images provided by Kaggle.
 Thus, to create more data, we used a Keras data augmentation generator to "create" more data
 and control overfitting. In the data augmentation generator, we allowed for horizontal and
-vertical flipping, zooming, as well as shearing. We fed this data generator into the U-Net, which
-improved our validation pixel F1 score from $.85$ to $.89$.
+vertical flipping, zooming, as well as shearing. We also held out $10\%$ of the data for validation
+to further ensure that we were not overfitting. Once we fed this data generator into the U-Net and
+calculated F1 score on our validation set, we found that data augmentation improved our validation
+pixel F1 score from $.85$ to $.89$.
 
 \begin{appendixatend}
     \subsection{U-Net Architecture}
@@ -704,6 +706,36 @@ We learned several lesson from this project:
   \item On a related note, every stage in a pipeline should be evaluated
   quantitatively, not just qualitatively
 \end{enumerate}
+
+\section{ Histories }
+
+\subsection{ Git }
+
+Since the relase of the project, we had over 200 git commits. In figure
+\ref{fig:commit_graph}, we show a graph of number of git commits vs. time:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{./figs/commit_graph.png}
+    \caption{Git commits vs. Time}
+    \label{fig:commit_graph}
+\end{figure}
+
+\subsection{ Kaggle }
+
+For the past 3 months, we have struggled to submit to Kaggle. We first tried
+to submit over 3 months ago and have tried at uniform time intervals since then.
+However, up until a week ago, we were unable to submit to Kaggle without error.
+To remedy this, we copied the
+\href{https://www.kaggle.com/zhujf553/end2end-stage1-score-computer/notebook}
+{End2end stage1 score computer} Kaggle kernel linked on piazza for a local
+implementation of the competition metric, and we use this to evaluate our
+pipeline after the Stage 1 answers were released. Approximately one week ago,
+we were finally able to submit without error. However, by that time, we had
+already solidified our entire pipeline and our predictions thus have not changed.
+Thus, we do not believe that our Kaggle submission history conveys very much
+information, as it is comprised merely of a series of errors, followed by our
+final score.
 
 \newpage
 
