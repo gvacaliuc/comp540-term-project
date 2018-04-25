@@ -23,6 +23,7 @@
 \usepackage{enumitem} % get more out of enumerate
 
 % begin additional packages
+\usepackage{booktabs}
 \usepackage{csquotes}
 \usepackage{hyperref}
 \usepackage{blindtext}
@@ -595,7 +596,28 @@ After performing a grid search over our linear model hyperparameters, we result
 in the following two sets of Area Under the Receiver Operating Characteristic
 Curve (ROC AUC) scores, which can be seen in Tables \ref{tab:sgd-gs} and
 \ref{tab:pa-gs}.  The two tables correspond to the \texttt{SGDRegressor} and
-the \texttt{PassiveAggressiveRegressor}.
+the \texttt{PassiveAggressiveRegressor}.  Using the best combination of
+parameters, we save our regressor coefficients for each and present the
+predictions along the ground truth masks in Figure \ref{fig:lin-mod-out}.
+
+\begin{table}[H]
+    \centering
+    \caption{Results from a grid search over $\ell_1$ ratio and regularization
+    strength $\alpha$, the hyperparameters for our elastic net regularization.}
+    \label{tab:sgd-gs}
+    \input{./sgd-gridsearch-table.tex}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{./figs/sgd-output.png}
+    \includegraphics[width=0.85\textwidth]{./figs/pa-output.png}
+    \includegraphics[width=0.85\textwidth]{./figs/ground-truth-binary.png}
+    \caption{Comparison between the SGDRegressor outputs (top), the
+    PassiveAggressiveRegressor outputs (middle), and the ground truth binary
+    labels.}
+    \label{fig:processing-results}
+\end{figure}
 
 \subsection{UNet as a Learned Binarizer}
 
