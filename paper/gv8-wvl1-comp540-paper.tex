@@ -475,7 +475,7 @@ to each pixel. For the purpose of our pipeline, the classes are
 To segment the image, a U-Net ``supplement[s] a usual contracting network by
 successive layers, where pooling operators are replaced by upsampling
 operators. In order to localize, high resolution features from the contracting
-path are combined with the upsampled output" (Ronneberger et al. 2). Stacking
+path are combined with the upsampled output" \cite{unet}. Stacking
 the high-resolution features with the unsampled output results in symmetry
 between the expansive path and the contracting path, resulting in a u-shape as
 seen in Figure \ref{fig:U-Net-architecture}. For the image borders, U-Net
@@ -608,6 +608,14 @@ predictions along the ground truth masks in Figure \ref{fig:lin-mod-out}.
     \input{./sgd-gridsearch-table.tex}
 \end{table}
 
+\begin{table}[H]
+    \centering
+    \caption{Results from a grid search over regularization strength C, the
+    hyperparameter for our PA regressor.}
+    \label{tab:pa-gs}
+    \input{./pa-gridsearch-table.tex}
+\end{table}
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{./figs/sgd-output.png}
@@ -615,11 +623,24 @@ predictions along the ground truth masks in Figure \ref{fig:lin-mod-out}.
     \includegraphics[width=0.85\textwidth]{./figs/ground-truth-binary.png}
     \caption{Comparison between the SGDRegressor outputs (top), the
     PassiveAggressiveRegressor outputs (middle), and the ground truth binary
-    labels.}
+    labels (bottom).}
     \label{fig:processing-results}
 \end{figure}
 
 \subsection{UNet as a Learned Binarizer}
+
+We trained our UNet for 50 epochs on a large portion of the stage 1 training
+set, evaluating it on a small fraction that was set aside.  Our trained model
+consistently scores a \textbf{pixelwise F1 score of 0.89}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{./figs/unet-output.png}
+    \includegraphics[width=0.85\textwidth]{./figs/ground-truth-binary.png}
+    \caption{Comparison between the UNet outputs (top) and the ground truth
+    binary labels (bottom).}
+    \label{fig:unet-output}
+\end{figure}
 
 \subsection{Semantic Segmentation using Watershed}
 
@@ -683,9 +704,6 @@ We learned several lesson from this project:
   \item On a related note, every stage in a pipeline should be evaluated
   quantitatively, not just qualitatively
 \end{enumerate}
-
-
-\section{Conclusion}
 
 \newpage
 
