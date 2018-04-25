@@ -457,7 +457,7 @@ the \textit{aggressiveness} of the regressor, as seen below.
 
 such that $\ell(w; (x_t, y_t)) \le \xi$ and $\xi \ge 0$.
 
-\subsection{UNet as a Learned Binarizer}
+\subsection{U-Net as a Learned Binarizer}
 
 Stacking our predictions from our linear models with our 5 features, we complete
 our pipeline using a DNN functioning as a learned binarizer called a ``U-Net"
@@ -477,7 +477,7 @@ operators. In order to localize, high resolution features from the contracting
 path are combined with the upsampled output" (Ronneberger et al. 2). Stacking
 the high-resolution features with the unsampled output results in symmetry
 between the expansive path and the contracting path, resulting in a u-shape as
-seen in Figure \ref{fig:unet-architecture}. For the image borders, U-Net
+seen in Figure \ref{fig:U-Net-architecture}. For the image borders, U-Net
 extrapolates missing information by mirroring the original image accross the
 image borders.
 
@@ -507,16 +507,16 @@ amount after 50 epochs.
 As prior mentioned, we only had 670 training images and 67 validation images provided by Kaggle.
 Thus, to create more data, we used a Keras data augmentation generator to "create" more data
 and control overfitting. In the data augmentation generator, we allowed for horizontal and
-vertical flipping, zooming, as well as shearing. We fed this data generator into the UNet, which
+vertical flipping, zooming, as well as shearing. We fed this data generator into the U-Net, which
 improved our validation pixel F1 score from $.85$ to $.89$.
 
 \begin{appendixatend}
     \subsection{U-Net Architecture}
     \begin{figure}
         \centering
-        \includegraphics[width=\textwidth]{./figs/unet_architecture.png}
+        \includegraphics[width=\textwidth]{./figs/U-Net_architecture.png}
         \caption{The U-Net Architecture, as presented in  \href{https://arxiv.org/pdf/1505.04597.pdf}{The Original U-Net Proposition Paper} }
-        \label{fig:unet-architecture}
+        \label{fig:U-Net-architecture}
     \end{figure}
 \end{appendixatend}
 
@@ -591,7 +591,7 @@ Our feature representation for each modality can be seen in Figure
 
 \subsection{Linear Model for Individual Pixel Probabilities}
 
-\subsection{UNet as a Learned Binarizer}
+\subsection{U-Net as a Learned Binarizer}
 
 \subsection{Semantic Segmentation using Watershed}
 
@@ -599,10 +599,10 @@ Our feature representation for each modality can be seen in Figure
 
 \subsection{ Dataset Insights }
 Our various experiments revealed that the data is much noiser than we thought.
-We thought that feeding the UNet as much information as possible would allow
-the UNet to model this background noise. However, we believe that the distribution
+We thought that feeding the U-Net as much information as possible would allow
+the U-Net to model this background noise. However, we believe that the distribution
 of noise is different depending on the data modality, and was thus difficult for the
-UNet to learn. Thus, we also learned that although DNN's are excellent at
+U-Net to learn. Thus, we also learned that although DNN's are excellent at
 providing abstract representations of the data, they cannot learn multiple noise
 distributions given such a small dataset. To fix this problem, we would've liked to
 preprocess the data in a way such that all modalities are unified in both foreground
@@ -628,8 +628,8 @@ above.
 As for how we went about selecting the specific steps in our pipeline, we thoughts
 of this problem as two-stage: predicting if a pixel is part of a nucleus
 (i.e. binarization), then predicting which pixel it is part of (i.e. segmentation).
-For the binarization step, we saw that UNet was successful, so we decided to feed
-in as much information as possible to our UNet. For segmentation, watershed seemed
+For the binarization step, we saw that U-Net was successful, so we decided to feed
+in as much information as possible to our U-Net. For segmentation, watershed seemed
 reasonable, but also oversegmented very frequently, so we modified it to include a
 non-maximum suppression step. To unify the modalities, we preprocessed the data by
 whitening. And to get rid of holes in the image, we performed a
