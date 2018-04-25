@@ -1,0 +1,24 @@
+feature_params:
+  bilateral_d: 2
+  bilateral_sigma_color: 75
+  bilateral_sigma_space: 75
+  equalize_hist_clip_limit: 0.03
+pa_params:
+  batch_size: 1000
+  num_iters: 25000
+  regressor__C: 0.2
+segmenter_params:
+  nms_min_distance: 3
+  watershed_line: true
+sgd_params:
+  batch_size: 1000
+  num_iters: 25000
+  regressor__l1_ratio: 0.11
+  regressor__penalty: elasticnet
+test_dir: ./data/stage2_test
+train_dir: ./data/stage1_train
+unet_params:
+  architecture: ''
+  epochs: 50
+  weights: ./weights/unet_weights.h5
+val_dir: ./data/stage1_test
