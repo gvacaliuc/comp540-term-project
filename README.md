@@ -1,22 +1,19 @@
 # comp540-term-project
+
 COMP540 Term Project. Will LeVine and Gabriel Vacaliuc.
 
-# Steps for Running Our Pipeline
+## data
 
-1. To generate a configuration file, make sure you are inside of the root
-directory for our project. Then type
-
+To get the data this project will use, please navigate to `/data` and run:
 ```bash
-$ deton8 generate_config ./config.yaml
+$ ./get_data.sh
 ```
 
-## Training
-
+## training
 ```bash
 $ deton8 train --config ./config.yaml
 ```
-
-## Testing
+## testing
 
 ```bash
 $ deton8 test --config ./config.yaml
